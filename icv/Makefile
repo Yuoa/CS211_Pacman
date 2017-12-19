@@ -13,7 +13,6 @@ BINDIR = /usr/bin
 all: $(OUTFILE)
 
 $(OUTFILE):
-	$(MAKE) bin-clean
 	$(COMPILER) $(SRCS) $(LIB) -o $(OUTFILE)
 
 bin-clean:
@@ -25,16 +24,13 @@ test-clean:
 clean:
 	rm -rf $(OUTFILE) $(TESTOUTPUT)
 
-test:
-	$(MAKE) test-d
-
 test-i:
 	$(MAKE) $(OUTFILE)
-	./$(OUTFILE) -i $(TESTFILES) -o $(TESTOUTPUT)
+	./$(OUTFILE) $(TESTFILES) -o $(TESTOUTPUT)
 
 test-d:
 	$(MAKE) $(OUTFILE)
-	./$(OUTFILE) -d $(TESTDIR) -o $(TESTOUTPUT)
+	./$(OUTFILE) $(TESTDIR) -o $(TESTOUTPUT)
 
 install:
 	$(MAKE) $(OUTFILE)

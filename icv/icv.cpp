@@ -1,58 +1,72 @@
-//By labus YUOA, 2017.
+//By Labus YUOA, 2017.
+#include <cstdio>
 #include <ostream>
 #include <iostream>
 #include <fstream>
 #include <cstring>
 #include <string>
 #include <vector>
+#include <cctype>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-#define PROCTYPE_UNKNOWN 0
-#define PROCTYPE_IMGPATH 1
-#define PROCTYPE_IMGDIR 2
-
 using namespace cv;
 using namespace std;
-
-string PROCTYPE_STR[3] = { "PROCTYPE_UNKNOWN", "PROCTYPE_IMGPATH", "PROCTYPE_IMGDIR" };
 
 int usage(char*);
 
 int main(int c, char** v) {
 
-	cout << "Image converter for mangoboard.\n\n";
+	cout << "Image converter for mangoboard.\n";
 
-	if (c < 2)
+	/* Check Argument Count */
+
+	if (c < 2) {
+
+		cout << "ICV does NOT support alpha(transparency) channel for now.\n\n";
+
 		return usage(v[0]);
 
+	}
+
+	cout << endl;
+
+	/* Basic Variables */
+
 	string outputFile = "<Standard Output>";
+	string prefix = "img_";
 	string suffix = "_";
-	int incomingType = PROCTYPE_UNKNOWN;
 	bool outFileConfigFlag = false;
 	bool suffixFlag = false;
+	bool prefixFlag = false;
 	vector<char*> *targets = new vector<char*>();
+
+	/* Analyze Arguments */
 
 	for (int t = 1; t < c; t++) {
 	
-		if (strcmp(v[t], "-i") == 0 && incomingType == PROCTYPE_UNKNOWN) {
+		if(strcmp(v[t], "-v") == 0) {
 		
-			incomingType = PROCTYPE_IMGPATH;
+			cout << "Version: ICV_REV201712203\n";
+
+			exit(0);
 		
-		} else if (strcmp(v[t], "-o") == 0 && suffixFlag == false) {
+		} else if (strcmp(v[t], "-o") == 0 && suffixFlag == false && prefixFlag == false) {
 		
 			outFileConfigFlag = true;
 		
-		} else if (strcmp(v[t], "-d") == 0 && incomingType == PROCTYPE_UNKNOWN) {
-
-			incomingType = PROCTYPE_IMGDIR;
-
-		} else if (strcmp(v[t], "-s") == 0 && outFileConfigFlag == false) {
+		} else if (strcmp(v[t], "-s") == 0 && outFileConfigFlag == false && prefixFlag == false) {
 			
 			suffixFlag = true;
 
+		} else if (strcmp(v[t], "-p") == 0 && outFileConfigFlag == false && suffixFlag == false) {
+		
+			prefixFlag = true;
+		
 		} else if (outFileConfigFlag) {
 		
 			outputFile = string(v[t]);
@@ -65,7 +79,13 @@ int main(int c, char** v) {
 
 			suffixFlag = false;
 		
-		} else if (incomingType == PROCTYPE_UNKNOWN || v[t][0] == '-') {
+		} else if (prefixFlag) {
+		
+			prefix = string(v[t]);
+
+			prefixFlag = false;
+		
+		} else if (v[t][0] == '-') {
 		
 			delete targets;
 
@@ -79,23 +99,72 @@ int main(int c, char** v) {
 	
 	}
 
+	/* Print Configurations */
+
 	cout << "[Configuration]"
-		<< "\nInput Mode  : " << PROCTYPE_STR[incomingType]
 		<< "\nInput Count : " << targets->size()
 		<< "\nOutput File : " << outputFile
 		<< "\n\n";
 
-	if(incomingType == PROCTYPE_UNKNOWN) {
+	/* Expand if target is folder */
+
+	cout << "Expanding directories... ";
+
+	int s = targets->size();
+
+	vector<char*> *temp = new vector<char*>();
+
+	for(int t = 0; t < s; t++) {
 	
-		cout << "Please set input mode via using \"-i\" or \"-d\" option.\n\n";
+		struct stat buf;
 
-		delete targets;
+		if(stat(targets->at(t), &buf) == 0 && S_ISDIR(buf.st_mode)) {
 
-		return usage(v[0]);
+			/* Directory Exists */
+
+			DIR *target = opendir(targets->at(t));
+
+			if(target == NULL)
+				cout << "\nDir \"" << targets->at(t) << "\" does not exist. Remove this from list.\n";
+			else {
+
+				struct dirent *file = NULL;
+			
+				while((file = readdir(target)) != NULL)
+					if(file->d_name[0] != '.') {
+
+						/* Manually deep-copying c_str() */
+
+						string concaten = string(targets->at(t)).append(file->d_name);
+
+						char *dbuf = new char[concaten.size() + 1];
+
+						memcpy(dbuf, concaten.c_str(), concaten.size() + 1);
+
+						temp->push_back(dbuf);
+
+					}
+
+				closedir(target);
+
+			}
+
+			targets->erase(targets->begin() + t);
+
+			t--;
+			s--;
+		
+		}
 	
 	}
 
-	int s = targets->size();
+	targets->insert(targets->end(), temp->begin(), temp->end());
+
+	delete temp;
+
+	cout << "OK.\n\n";
+
+	/* Create or Copy Output Stream */
 
 	cout << "Setting output stream... ";
 
@@ -104,10 +173,14 @@ int main(int c, char** v) {
 
 	if(outputFile.compare("<Standard Output>") != 0) {
 	
+		/* Check If File Already Exists for User Notification */
+
 		struct stat buf;
 
 		if(stat(outputFile.c_str(), &buf) == 0)
-			cout << "(overwrite mode)";
+			cout << "(overwrite mode) ";
+
+		/* Open File for Write */
 
 		ofstream *fout = new ofstream();
 			
@@ -116,6 +189,8 @@ int main(int c, char** v) {
 		tout = fout;
 
 		if(!fout->is_open()) {
+
+			/* Error Occured in Opening File */
 		
 			cout << "ERROR!\n";
 			cerr << "Program is now going to be terminated due to output file open error.\n";
@@ -135,7 +210,11 @@ int main(int c, char** v) {
 
 	cout << "OK.\n\n";
 
+	/* Analyze Image and Save Pixel Data */
+
 	vector<string> *usedVar = new vector<string>();
+
+	s = targets->size();
 
 	for (int t = 0; t < s; t++) {
 	
@@ -143,10 +222,12 @@ int main(int c, char** v) {
 
 		Mat *origin = new Mat(imread(targets->at(t)));
 
+		/* Check If Mat is Empty */
+
 		if(origin->empty()) {
 		
 			cout << "Failed to load image: " << targets->at(t) << "\n";
-
+			
 			if(string(targets->at(t)).find(".gif") > 0)
 				cout << "(Hint: This program does not support GIF.)\n";
 			
@@ -155,9 +236,11 @@ int main(int c, char** v) {
 
 		} else {
 
-			//origin->convertTo(origin, CV_)
+			/* Do Some Pretreatment Here */
 
-			/* Determine it. */
+			//We determined to not support alpha. So do nothing in here.
+
+			/* Determine Variable Name */
 
 			string target = string(targets->at(t));
 			int lastDirIndicator = target.rfind("/");
@@ -173,6 +256,11 @@ int main(int c, char** v) {
 				if(usedVar->at(e).compare(var) == 0)
 					var = originalVar + suffix + to_string(increment++);
 		
+			if(isdigit(var.c_str()[0]))
+				var = prefix + var;
+
+			/* Print Conversion Information */
+
 			int rows = origin->size().height;
 			int columns = origin->size().width;
 
@@ -180,20 +268,22 @@ int main(int c, char** v) {
 				<< "\nVariable Name: " << var
 				<< "\nWidth: " << columns << ", Height: " << rows << "\n";
 
-			out << "unsigned char " << var << "[" << origin->total() * 4 << "] = { ";
+			/* Start Conversion */
+
+			out << "unsigned char " << var << "[" << origin->total() * 3 << "] = { ";
 
 			for(int e = 0; e < rows; e++)
 				for(int m = 0; m < columns; m++) {
 
-					if(e + m != 0) {
-					
+					if(e + m != 0)
 						out << ", ";
-					
-					}
 				
-					Vec4b px = origin->at<Vec4b>(Point(m, e));
-
-					out << "0x" << hex << (int) px[0] << ", 0x" << (int) px[1] << ", 0x" << (int) px[2] << ", 0x" << (int) px[3];
+					Vec3b px = origin->at<Vec3b>(Point(m, e));
+					
+					out << hex
+						<< "0x" << (int) px[0] //Blue
+						<< ", 0x" << (int) px[1] //Green
+						<< ", 0x" << (int) px[2]; //Red
 				
 				}
 
@@ -203,6 +293,8 @@ int main(int c, char** v) {
 				out << "\n";
 
 			out.flush();
+
+			/* Conversion Finished */
 
 			usedVar->push_back(var);
 
@@ -216,6 +308,8 @@ int main(int c, char** v) {
 	
 	}
 
+	/* Program Termination */
+
 	if (!standard)
 		delete &out;
 
@@ -224,29 +318,35 @@ int main(int c, char** v) {
 
 	cout << "Conversion Completed." << endl;
 
-	return 0;	
+	return 0;
 
 }
 
 int usage(char* vz) {
 
-	cout << "Usage: " << vz << " [-o Output File Path] [-s Suffix]\n";
+	/* Print Usage Message */
+
+	cout << "Usage: " << vz << " [-v] [-o Output File Path] [-p Prefix]\n";
 
 	int vzLength = strlen(vz);
 	string spaces = "";
 
 	for(int t = 0; t++ < vzLength; spaces += " ");
 
-	cout << "       " << spaces << " -i Image Path ... | -d Image Directory Path\n"
+	cout << "       " << spaces << " [-s Suffix] Image|Directory ...\n"
 		<< "\nOptions:\n"
+		<< "\t-v      Print ICV Version.\n"
 		<< "\t-o      If you don\'t set output file path, defaultly output will\n"
 		<< "\t        be printed to standard output.\n"
+		<< "\t-p      Prefix to be used when the variable name starts with \n"
+		<< "\t        number. Default is \"img_\". If name is \"19th_birthday\",\n"
+		<< "\t        prefixed name will be (prefix)+\"19th_birthday\".\n"
 		<< "\t-s      Suffix to be used when the variable name is duplicated.\n"
 		<< "\t        Default suffix is \"_\". If name \"red\" is duplicated,\n"
-		<< "\t        secondary variable name will be \"red\"+(suffix)+\"2\".\n"
-		<< "\t        (cf. Variable name of \"./test/red.jpg\" is \"red\".)\n"
-		<< "\t-i      Write one (or more) image paths.\n"
-		<< "\t-d      This program will be convert all files in directory.\n";
+		<< "\t        secondary name will be \"red\"+(suffix)+\"1\".\n";
+
+	cout << "\nNote:\n"
+		<< "\t        Variable name of \"./test/red.jpg\" is \"red\".\n";
 	
 	return 0;
 
