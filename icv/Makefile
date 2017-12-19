@@ -1,5 +1,42 @@
-all:
-	g++ icv.cpp -lopencv_imgcodecs -lopencv_core -o icv
+COMPILER = g++
+SRCS = icv.cpp
+LIB = -lopencv_core -lopencv_imgcodecs
+OUTFILE = icv
+
+TESTDIR = ./test/
+TESTFILES = $(TESTDIR)umji.48x48.jpg $(TESTDIR)blue.225x225.png $(TESTDIR)red.20x20.gif
+TESTOUTPUT = test.out
+
+INSTALLER = install
+BINDIR = /usr/bin
+
+all: $(OUTFILE)
+
+$(OUTFILE):
+	$(MAKE) bin-clean
+	$(COMPILER) $(SRCS) $(LIB) -o $(OUTFILE)
+
+bin-clean:
+	rm -rf $(OUTFILE)
+
+test-clean:
+	rm -rf $(TESTOUTPUT)
 
 clean:
-	rm icv
+	rm -rf $(OUTFILE) $(TESTOUTPUT)
+
+test:
+	$(MAKE) test-d
+
+test-i:
+	$(MAKE) $(OUTFILE)
+	./$(OUTFILE) -i $(TESTFILES) -o $(TESTOUTPUT)
+
+test-d:
+	$(MAKE) $(OUTFILE)
+	./$(OUTFILE) -d $(TESTDIR) -o $(TESTOUTPUT)
+
+install:
+	$(MAKE) $(OUTFILE)
+	install -m 557 $(OUTFILE) $(BINDIR)
+

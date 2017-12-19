@@ -28,9 +28,11 @@ int main(int c, char** v) {
 	if (c < 2)
 		return usage(v[0]);
 
-	string outputFile = "STANDARD OUTPUT";
+	string outputFile = "<Standard Output>";
+	string suffix = "_";
 	int incomingType = PROCTYPE_UNKNOWN;
 	bool outFileConfigFlag = false;
+	bool suffixFlag = false;
 	vector<char*> *targets = new vector<char*>();
 
 	for (int t = 1; t < c; t++) {
@@ -39,7 +41,7 @@ int main(int c, char** v) {
 		
 			incomingType = PROCTYPE_IMGPATH;
 		
-		} else if (strcmp(v[t], "-o") == 0) {
+		} else if (strcmp(v[t], "-o") == 0 && suffixFlag == false) {
 		
 			outFileConfigFlag = true;
 		
@@ -47,12 +49,22 @@ int main(int c, char** v) {
 
 			incomingType = PROCTYPE_IMGDIR;
 
+		} else if (strcmp(v[t], "-s") == 0 && outFileConfigFlag == false) {
+			
+			suffixFlag = true;
+
 		} else if (outFileConfigFlag) {
 		
 			outputFile = string(v[t]);
 
 			outFileConfigFlag = false;
 
+		} else if (suffixFlag) {
+		
+			suffix = string(v[t]);
+
+			suffixFlag = false;
+		
 		} else if (incomingType == PROCTYPE_UNKNOWN || v[t][0] == '-') {
 		
 			delete targets;
@@ -90,11 +102,7 @@ int main(int c, char** v) {
 	ostream *tout = &cout;
 	bool standard = true;
 
-	if(outputFile.compare("STANDARD OUTPUT") == 0) {
-	
-		outputFile = "<Standard Output>";
-	
-	} else {
+	if(outputFile.compare("<Standard Output>") != 0) {
 	
 		struct stat buf;
 
@@ -127,29 +135,52 @@ int main(int c, char** v) {
 
 	cout << "OK.\n\n";
 
+	vector<string> *usedVar = new vector<string>();
+
 	for (int t = 0; t < s; t++) {
 	
-		cout << "Starts to process image " << t << " of " << s << "...\n";
+		cout << "Starts to process image " << t + 1 << " of " << s << "...\n";
 
 		Mat *origin = new Mat(imread(targets->at(t)));
 
 		if(origin->empty()) {
 		
-			cout << "Failed to load image: " << targets->at(t)
-				<< "\nContinue to next image.\n";
+			cout << "Failed to load image: " << targets->at(t) << "\n";
+
+			if(string(targets->at(t)).find(".gif") > 0)
+				cout << "(Hint: This program does not support GIF.)\n";
+			
+			if(t + 1 != s)
+				cout << "Continue to next image.\n";
 
 		} else {
 
 			//origin->convertTo(origin, CV_)
 
+			/* Determine it. */
+
 			string target = string(targets->at(t));
+			int lastDirIndicator = target.rfind("/");
+
+			string pureTarget = target.substr((lastDirIndicator == string::npos) ? 0 : lastDirIndicator + 1, target.length());
+			int extensionIndicator = pureTarget.find(".");
+
+			string var = pureTarget.substr(0, (extensionIndicator == string::npos) ? pureTarget.length() : extensionIndicator);
+			string originalVar = var; //Basically assign operator of C++ uses hard copy. 
+			int increment = 1;
+
+			for(int e = 0; e < usedVar->size(); e++)
+				if(usedVar->at(e).compare(var) == 0)
+					var = originalVar + suffix + to_string(increment++);
 		
 			int rows = origin->size().height;
 			int columns = origin->size().width;
 
-			cout << "Width: " << columns << ", Height: " << rows << "\n\n";
+			cout << "File: " << pureTarget << "(" << target << ")"
+				<< "\nVariable Name: " << var
+				<< "\nWidth: " << columns << ", Height: " << rows << "\n";
 
-			out << "unsigned char " << target.substr(0, target.find(".")) << "[" << origin->total() * 4 << "] = { ";
+			out << "unsigned char " << var << "[" << origin->total() * 4 << "] = { ";
 
 			for(int e = 0; e < rows; e++)
 				for(int m = 0; m < columns; m++) {
@@ -166,9 +197,16 @@ int main(int c, char** v) {
 				
 				}
 
-			out << " };\n\n";
+			out << " };\n";
+
+			if(!standard)
+				out << "\n";
 
 			out.flush();
+
+			usedVar->push_back(var);
+
+			cout << "Finished.\n";
 		
 		}
 
@@ -182,8 +220,9 @@ int main(int c, char** v) {
 		delete &out;
 
 	delete targets;
+	delete usedVar;
 
-	cout << "Program Completed." << endl;
+	cout << "Conversion Completed." << endl;
 
 	return 0;	
 
@@ -191,12 +230,23 @@ int main(int c, char** v) {
 
 int usage(char* vz) {
 
-	cout << "Usage: " << vz << " [-o Output File Path] [-i Image Path ... | -d Image Directory Path]\n"
-		<< "\nOptions:\n\n"
-		<< "-o      If you don\'t set output file path, defaultly output will be\n"
-		<< "        printed to standard output.\n"
-		<< "-d      This program will be convert all files in directory.\n"
-		<< "\n";
+	cout << "Usage: " << vz << " [-o Output File Path] [-s Suffix]\n";
+
+	int vzLength = strlen(vz);
+	string spaces = "";
+
+	for(int t = 0; t++ < vzLength; spaces += " ");
+
+	cout << "       " << spaces << " -i Image Path ... | -d Image Directory Path\n"
+		<< "\nOptions:\n"
+		<< "\t-o      If you don\'t set output file path, defaultly output will\n"
+		<< "\t        be printed to standard output.\n"
+		<< "\t-s      Suffix to be used when the variable name is duplicated.\n"
+		<< "\t        Default suffix is \"_\". If name \"red\" is duplicated,\n"
+		<< "\t        secondary variable name will be \"red\"+(suffix)+\"2\".\n"
+		<< "\t        (cf. Variable name of \"./test/red.jpg\" is \"red\".)\n"
+		<< "\t-i      Write one (or more) image paths.\n"
+		<< "\t-d      This program will be convert all files in directory.\n";
 	
 	return 0;
 
