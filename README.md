@@ -1,3 +1,4 @@
-# Pacman core
-This includes only game-rule related sources.
+# Pacman image-core
+This includes only image resources and its manager source file.
+
 
