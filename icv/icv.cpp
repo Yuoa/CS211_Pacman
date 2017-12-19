@@ -51,7 +51,7 @@ int main(int c, char** v) {
 	
 		if(strcmp(v[t], "-v") == 0) {
 		
-			cout << "Version: ICV_REV201712203\n";
+			cout << "Version: ICV_REV201712204\n";
 
 			exit(0);
 		
@@ -346,7 +346,7 @@ int usage(char* vz) {
 		<< "\t        secondary name will be \"red\"+(suffix)+\"1\".\n";
 
 	cout << "\nNote:\n"
-		<< "\t        Variable name of \"./test/red.jpg\" is \"red\".\n";
+		<< "\t        Variable name of \"./test/red.blue.white.jpg\" is \"red\".\n";
 	
 	return 0;
 
