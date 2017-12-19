@@ -1,4 +1,7 @@
-# Pacman image-core
-This includes only image resources and its manager source file.
+# Pacman image-conversion
+This includes image to pixeldata converter tool.
+
+## Prerequisites
+- OpenCV 3.3
 
 
