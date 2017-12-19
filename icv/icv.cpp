@@ -17,11 +17,10 @@
 using namespace cv;
 using namespace std;
 
+int gpl();
 int usage(char*);
 
 int main(int c, char** v) {
-
-	cout << "Image converter for mangoboard.\n";
 
 	/* Check Argument Count */
 
@@ -32,8 +31,6 @@ int main(int c, char** v) {
 		return usage(v[0]);
 
 	}
-
-	cout << endl;
 
 	/* Basic Variables */
 
@@ -51,9 +48,9 @@ int main(int c, char** v) {
 	
 		if(strcmp(v[t], "-v") == 0) {
 		
-			cout << "Version: ICV_REV201712204\n";
+			cout << "Version: ICV_REV201712205\n";
 
-			exit(0);
+			return gpl();
 		
 		} else if (strcmp(v[t], "-o") == 0 && suffixFlag == false && prefixFlag == false) {
 		
@@ -349,6 +346,24 @@ int usage(char* vz) {
 		<< "\t        Variable name of \"./test/red.blue.white.jpg\" is \"red\".\n";
 	
 	return 0;
+
+}
+
+int gpl() {
+
+	cout << "License: \n\n"
+		<< "    ICV converts jpg/png images to pixel data for mangoboard.\n"
+		<< "    Copyright (C) 2017  Yuoa\n\n"
+    		<< "    This program is free software: you can redistribute it and/or modify\n"
+    		<< "    it under the terms of the GNU General Public License as published by\n"
+    		<< "    the Free Software Foundation, either version 3 of the License, or\n"
+    		<< "    (at your option) any later version.\n\n"
+		<< "    This program is distributed in the hope that it will be useful,\n"
+	    	<< "    but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+    		<< "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+    		<< "    GNU General Public License for more details.\n"
+    		<< "    You should have received a copy of the GNU General Public License\n"
+    		<< "    along with this program.  If not, see <http://www.gnu.org/licenses/>.\n\n";
 
 }
 
