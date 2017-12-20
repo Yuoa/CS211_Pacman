@@ -1,4 +1,5 @@
 COMPILER = g++
+FLAGS = -std=c++17
 SRCS = icv.cpp
 LIB = -lopencv_core -lopencv_imgcodecs
 OUTFILE = icv
@@ -13,7 +14,7 @@ BINDIR = /usr/bin
 all: $(OUTFILE)
 
 $(OUTFILE):
-	$(COMPILER) $(SRCS) $(LIB) -o $(OUTFILE)
+	$(COMPILER) $(FLAGS) $(SRCS) $(LIB) -o $(OUTFILE)
 
 bin-clean:
 	rm -rf $(OUTFILE)
