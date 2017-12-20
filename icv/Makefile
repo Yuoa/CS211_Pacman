@@ -2,6 +2,7 @@ COMPILER = g++
 FLAGS = -std=c++17
 SRCS = icv.cpp
 LIB = -lopencv_core -lopencv_imgcodecs
+OUTDIR = ./bin/
 OUTFILE = icv
 
 TESTDIR = ./test/
@@ -14,26 +15,26 @@ BINDIR = /usr/bin
 all: $(OUTFILE)
 
 $(OUTFILE):
-	$(COMPILER) $(FLAGS) $(SRCS) $(LIB) -o $(OUTFILE)
+	$(COMPILER) $(FLAGS) $(SRCS) $(LIB) -o $(OUTDIR)$(OUTFILE)
 
 bin-clean:
-	rm -rf $(OUTFILE)
+	rm -rf $(OUTDIR)$(OUTFILE)
 
 test-clean:
 	rm -rf $(TESTOUTPUT)
 
 clean:
-	rm -rf $(OUTFILE) $(TESTOUTPUT)
+	rm -rf $(OUTDIR)$(OUTFILE) $(TESTOUTPUT)
 
 test-i:
 	$(MAKE) $(OUTFILE)
-	./$(OUTFILE) $(TESTFILES) -o $(TESTOUTPUT)
+	./$(OUTDIR)$(OUTFILE) $(TESTFILES) -o $(TESTOUTPUT)
 
 test-d:
 	$(MAKE) $(OUTFILE)
-	./$(OUTFILE) $(TESTDIR) -o $(TESTOUTPUT)
+	./$(OUTDIR)$(OUTFILE) $(TESTDIR) -o $(TESTOUTPUT)
 
 install:
 	$(MAKE) $(OUTFILE)
-	install -m 557 $(OUTFILE) $(BINDIR)
+	install -m 557 $(OUTDIR)$(OUTFILE) $(BINDIR)
 
