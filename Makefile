@@ -10,6 +10,8 @@ OUTFILE=$(OUTDIR)/lcd
 CFG_INC=-Iinclude
 OBJ=\
 	$(OUTDIR)/lcd.o \
+	$(OUTDIR)/s3c_timer.o \
+	$(OUTDIR)/s3c_gpio.o \
 	$(OUTDIR)/s3c_uart.o \
 	$(OUTDIR)/support.o\
 
