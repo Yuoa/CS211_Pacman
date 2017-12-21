@@ -40,16 +40,20 @@ typedef struct
 /*4: player*/
 /*5: enemy + blank*/
 /*6: enemy + coin*/
-/*7: enemy + fellit*/
+/*7: item*/
 
-void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int enemy_cnt, int coin_cnt)
+void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int enemy_cnt, int coin_cnt, int life, int score)
 {
-	printf("LEFT COIN : %d\n", coin_cnt);
-	printf("LEFT ENEMY : %d\n", enemy_cnt);
+	int i, j, k, IsEnemy;
+
+	printf("LIFE : ");
+	for (i = 0; i < life; i++)
+		printf("¢¾");
+	printf("\nSCORE : %d\n", score);
 	printf("%d\n", player.mode);
 
 
-	int i, j, k, IsEnemy;
+	
 	for (i = 0; i < I; i++)
 	{
 		for (j = 0; j < J; j++)
@@ -61,7 +65,10 @@ void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int
 
 				if (enemy[k].i == i&&enemy[k].j == j)
 				{
-					printf("¢¾");
+					if (!player.mode)
+						printf("¢¾");
+					else
+						printf("¢½");
 					IsEnemy = 1;
 					break;
 				}
@@ -70,19 +77,17 @@ void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int
 			if (IsEnemy) continue;
 
 			if (i == player.i&&j == player.j)
-			{
-				/*normal*/
-				if (!player.mode)
-					printf("¡Ü");
-				else
-					printf("¡Û");
-			}
+
+				printf("¡Ü");
+
 			else if (map[i][j] == 1)
 				printf("¡á");
 			else if (map[i][j] == 2)
 				printf("¢Á");
 			else if (map[i][j] == 3)
 				printf("¡Ø");
+			else if (map[i][j] == 7)
+				printf("¢Í");
 			else if (map[i][j] == 0 || map[i][j] == 8 || map[i][j] == 9)
 				printf("  ");
 		}
@@ -325,7 +330,7 @@ int MoveCheck(int map[][J], Player player, int direction)
 	}
 }
 
-int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int enemy_cnt_init, int* enemy_cnt, int *life)
+int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int enemy_cnt_init, int* enemy_cnt, int *life, int*score)
 {
 	int i;
 	/*coin*/
@@ -333,18 +338,27 @@ int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int en
 	{
 		map[(*player).i][(*player).j] = 0;
 		(*coin)--;
+		(*score)+=10;
 
 		return 0;
 	}
-	/*fellit*/
+	/*fellet*/
 	else if (map[(*player).i][(*player).j] == 3)
 	{
 		(*player).mode = MODE;
 		map[(*player).i][(*player).j] = 0;
+		(*score) += 50;
 
 		return 0;
 	}
-	else if (map[(*player).i][(*player).j] != 0)
+	else if (map[(*player).i][(*player).j] == 7)
+	{
+		map[(*player).i][(*player).j] = 0;
+		(*score) += 200;
+
+		return 0;
+	}
+	else if (map[(*player).i][(*player).j] == 5|| map[(*player).i][(*player).j] == 6)
 	{
 		for (i = 0; i < enemy_cnt_init; i++)
 		{
@@ -365,6 +379,7 @@ int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int en
 			enemy[i].valid = 0;
 			(*enemy_cnt)--;
 			map[(*player).i][(*player).j] = 0;
+			(*score) += 200;
 
 			return 2;
 		}
@@ -416,37 +431,47 @@ int main()
 
 	enemy_cnt = enemy_cnt_init;
 
-	//EnemyMove(map, player, enemy, enemy_cnt_init);
-	printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt, life);
-	printf("%d %d %d %d %d %d %d %d\n", player.i, player.j, enemy[0].i, enemy[0].j, enemy[1].i, enemy[1].j, enemy[2].i, enemy[2].j);
+	printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt, life, score);
 
 
 	while (1)
 	{
 		char a;
 
+		
 		a = getch();
 
 		if (a == 27)break;
-		else if (a == 72) { if (MoveCheck(map, player, UP)) player.i--; }
-		else if (a == 80) { if (MoveCheck(map, player, DOWN))player.i++; }
-		else if (a == 75) { a = MoveCheck(map, player, LEFT); if (a == 1)player.j--; else if (a == 2) player.j = J-1; }
-		else if (a == 77) { a = MoveCheck(map, player, RIGHT); if (a == 1)player.j++; else if (a == 2) player.j = 0; }
-		
-		
-		EnemyMove(map, player, enemy, enemy_cnt_init);
-		
+		{
+			if (a == 'w') { if (MoveCheck(map, player, UP)) player.i--; }
+			else if (a == 's') { if (MoveCheck(map, player, DOWN))player.i++; }
+			else if (a == 'a') { a = MoveCheck(map, player, LEFT); if (a == 1)player.j--; else if (a == 2) player.j = J - 1; }
+			else if (a == 'd') { a = MoveCheck(map, player, RIGHT); if (a == 1)player.j++; else if (a == 2) player.j = 0; }
+		}
+		CollisionCheck(map, &player, enemy, &coin_cnt, enemy_cnt_init, &enemy_cnt, &life, &score);
 
-		CollisionCheck(map, &player, enemy, &coin_cnt, enemy_cnt_init, &enemy_cnt, &life);
+		EnemyMove(map, player, enemy, enemy_cnt_init);
+
+		CollisionCheck(map, &player, enemy, &coin_cnt, enemy_cnt_init, &enemy_cnt, &life, &score);
 		if (player.mode) (player.mode)--;
+
 		system("cls");
 
-		printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt);
-		//printf("%d %d %d %d %d %d %d %d\n", player.i, player.j, enemy[0].i, enemy[0].j, enemy[1].i, enemy[1].j, enemy[2].i, enemy[2].j);
-		//printf("%d %d %d", map[enemy[0].i][enemy[0].j],map[enemy[1].i][enemy[1].j],map[enemy[2].i][enemy[2].j]);
-		printf("%d %d", map[7][0], map[7][J]);
+		printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt, life, score);
 
 		Sleep(33);
+
+		if (life == 0)
+		{
+			printf("STAGE FAILED\n");
+			break;
+		}
+
+		if (coin_cnt == 0)
+		{
+			printf("STAGE CLEAR\n");
+			break;
+		}
 	}
 
 
