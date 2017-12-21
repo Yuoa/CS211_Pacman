@@ -83,7 +83,7 @@ void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int
 				printf("¢Á");
 			else if (map[i][j] == 3)
 				printf("¡Ø");
-			else if (map[i][j] == 0)
+			else if (map[i][j] == 0 || map[i][j] == 8 || map[i][j] == 9)
 				printf("  ");
 		}
 		printf("\n");
@@ -96,6 +96,8 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init)
 
 	for (i = 0; i < enemy_cnt_init; i++)
 	{
+		if (!enemy[i].valid) continue;
+
 		if (enemy[i].direction == UP)
 		{
 			if (map[enemy[i].i - 1][enemy[i].j] == 1)
@@ -121,7 +123,12 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init)
 
 				enemy[i].i = enemy[i].i - 1;
 
-				if (map[enemy[i].i - 1][enemy[i].j] == 2)
+				if (map[enemy[i].i - 1][enemy[i].j] == 0)
+				{
+					//enemy[i].i = enemy[i].i - 1;
+					map[enemy[i].i][enemy[i].j] = 5;
+				}
+				else if (map[enemy[i].i - 1][enemy[i].j] == 2)
 				{
 					//enemy[i].i = enemy[i].i - 1;
 					map[enemy[i].i][enemy[i].j] = 6;
@@ -169,7 +176,12 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init)
 
 				/**/
 				enemy[i].j = enemy[i].j - 1;
-				if (map[enemy[i].i][enemy[i].j] == 2)
+
+				if (map[enemy[i].i][enemy[i].j] == 0)
+				{
+					map[enemy[i].i][enemy[i].j] = 5;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 2)
 				{
 					map[enemy[i].i][enemy[i].j] = 6;
 				}
@@ -212,9 +224,12 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init)
 
 				/**/
 				enemy[i].i = enemy[i].i + 1;
-				if (map[enemy[i].i][enemy[i].j] == 2)
+				if (map[enemy[i].i][enemy[i].j] == 0)
 				{
-
+					map[enemy[i].i][enemy[i].j] = 5;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 2)
+				{
 					map[enemy[i].i][enemy[i].j] = 6;
 				}
 				else if (map[enemy[i].i][enemy[i].j] == 3)
@@ -256,9 +271,12 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init)
 
 				/**/
 				enemy[i].j = enemy[i].j + 1;
-				if (map[enemy[i].i][enemy[i].j] == 2)
+				if (map[enemy[i].i][enemy[i].j] == 0)
 				{
-
+					map[enemy[i].i][enemy[i].j] = 5;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 2)
+				{
 					map[enemy[i].i][enemy[i].j] = 6;
 				}
 				else if (map[enemy[i].i][enemy[i].j] == 3)
@@ -294,11 +312,15 @@ int MoveCheck(int map[][J], Player player, int direction)
 	else if (direction == LEFT)
 	{
 		if (map[player.i][player.j - 1] != 1) return 1;
+		if (map[player.i][player.j] == 8) return 2;
+
 		else return 0;
 	}
 	else if (direction == RIGHT)
 	{
 		if (map[player.i][player.j + 1] != 1) return 1;
+		if (map[player.i][player.j] == 9) return 2;
+
 		else return 0;
 	}
 }
@@ -394,9 +416,9 @@ int main()
 
 	enemy_cnt = enemy_cnt_init;
 
-	EnemyMove(map, player, enemy, enemy_cnt_init);
+	//EnemyMove(map, player, enemy, enemy_cnt_init);
 	printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt, life);
-	printf("%d %d %d\n", enemy[0].direction, enemy[1].direction, enemy[2].direction);
+	printf("%d %d %d %d %d %d %d %d\n", player.i, player.j, enemy[0].i, enemy[0].j, enemy[1].i, enemy[1].j, enemy[2].i, enemy[2].j);
 
 
 	while (1)
@@ -408,17 +430,22 @@ int main()
 		if (a == 27)break;
 		else if (a == 72) { if (MoveCheck(map, player, UP)) player.i--; }
 		else if (a == 80) { if (MoveCheck(map, player, DOWN))player.i++; }
-		else if (a == 75) { if (MoveCheck(map, player, LEFT))player.j--; }
-		else if (a == 77) { if (MoveCheck(map, player, RIGHT))player.j++; }
+		else if (a == 75) { a = MoveCheck(map, player, LEFT); if (a == 1)player.j--; else if (a == 2) player.j = J-1; }
+		else if (a == 77) { a = MoveCheck(map, player, RIGHT); if (a == 1)player.j++; else if (a == 2) player.j = 0; }
 		
+		
+		EnemyMove(map, player, enemy, enemy_cnt_init);
+		
+
 		CollisionCheck(map, &player, enemy, &coin_cnt, enemy_cnt_init, &enemy_cnt, &life);
 		if (player.mode) (player.mode)--;
-		EnemyMove(map, player, enemy, enemy_cnt_init);
-
 		system("cls");
 
 		printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt);
-		printf("%d %d %d\n", enemy[0].direction, enemy[1].direction, enemy[2].direction);
+		//printf("%d %d %d %d %d %d %d %d\n", player.i, player.j, enemy[0].i, enemy[0].j, enemy[1].i, enemy[1].j, enemy[2].i, enemy[2].j);
+		//printf("%d %d %d", map[enemy[0].i][enemy[0].j],map[enemy[1].i][enemy[1].j],map[enemy[2].i][enemy[2].j]);
+		printf("%d %d", map[7][0], map[7][J]);
+
 		Sleep(33);
 	}
 
