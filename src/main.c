@@ -2,6 +2,7 @@
 #include "s3c_timer.h"
 
 #include "pacman.h"
+#include "res-pm.h"
 
 void draw_image(int x, int y, int w, int h, unsigned char *data) {
   unsigned char *phy_addr = FB_ADDR;
@@ -20,13 +21,33 @@ void draw_image(int x, int y, int w, int h, unsigned char *data) {
   set_vidcon0_enable();
 }
 
+void die(void) {
+  draw_image(200, 200, 30, 30, pm_die_0);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_1);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_2);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_3);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_4);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_5);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_6);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_7);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_8);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_9);
+  mdelay(100);
+  draw_image(200, 200, 30, 30, pm_die_a);
+  mdelay(100);
+}
+
 int main(void){
   initial_env();
-  
-  int i;
-  for (i = 0; i < 100; i++) {
-    draw_image(200+i, 0, 224, 16, pacman_part);
-    mdelay(10);
-  }
+  die();
   return 0;
 }
