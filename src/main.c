@@ -3,8 +3,9 @@
 #include "interrupt.h"
 #include "graphics.h"
 
-#include "pacman.h"
-#include "res-pm.h"
+int direction = -1;
+int cnt[4] = {0, 0, 0, 0};
+int old_x, old_y;
 
 void draw_image(int x, int y, int w, int h, unsigned char *data) {
   unsigned char *phy_addr = FB_ADDR;
@@ -58,12 +59,42 @@ void initial_env(void) {
   enable_interrupts();
 }
 
+void change_dir(void) {
+  int sub[4] = {0, 0, 0, 0};
+  int max, index;
+  int i;
+
+  sub[0] = send_x - old_x;
+  sub[1] = send_y - old_y;
+  sub[2] = -sub[0];
+  sub[3] = -sub[1];
+  max = sub[0];
+  index = 0;
+  for (i = 1; i < 4; i++) {
+    if (sub[i] > max) {
+      index = i;
+      max = sub[i];
+    }
+  }
+  if (max < 3) index = -1;
+  for (i = 0; i < 4; i++) {
+    if (index != i) cnt[i] = 0;
+  }
+  if (index != -1) {
+    cnt[index]++;
+    if (cnt[index] >= 3) direction = index;
+  }
+}
+
 int main(void){
   initial_env();
   die();
   while (1) {
-    mdelay(1000);
-    printf("%d, %d\n", send_x, send_y);
+    old_x = send_x;
+    old_y = send_y;
+    mdelay(16);
+    change_dir();
+    printf("%d\n", direction);
   }
   return 0;
 }
