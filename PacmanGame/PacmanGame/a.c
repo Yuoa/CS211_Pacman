@@ -48,6 +48,7 @@ void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int
 	printf("LEFT ENEMY : %d\n", enemy_cnt);
 	printf("%d\n", player.mode);
 
+
 	int i, j, k, IsEnemy;
 	for (i = 0; i < I; i++)
 	{
@@ -82,18 +83,18 @@ void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int
 				printf("⊙");
 			else if (map[i][j] == 3)
 				printf("※");
-			else if(map[i][j] == 0)
+			else if (map[i][j] == 0)
 				printf("  ");
 		}
 		printf("\n");
 	}
 }
 
-void EnemyMove(int map[][J], Player player, Enemy* enemy)
+void EnemyMove(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init)
 {
 	int i;
 
-	for (i = 0; i < N; i++)
+	for (i = 0; i < enemy_cnt_init; i++)
 	{
 		if (enemy[i].direction == UP)
 		{
@@ -107,37 +108,44 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy)
 				{
 					map[enemy[i].i][enemy[i].j] = 0;
 				}
-				else if (map[enemy[i].i - 1][enemy[i].j] == 6)
+				else if (map[enemy[i].i][enemy[i].j] == 6)
 				{
-					map[enemy[i].i][enemy[i].j] = 1;
+					map[enemy[i].i][enemy[i].j] = 2;
 				}
 				else if (map[enemy[i].i - 1][enemy[i].j] == 7)
 				{
-					map[enemy[i].i][enemy[i].j] = 2;
+					map[enemy[i].i][enemy[i].j] = 3;
 				}
 
 				/**/
 
+				enemy[i].i = enemy[i].i - 1;
+
 				if (map[enemy[i].i - 1][enemy[i].j] == 2)
 				{
-					enemy[i].i = enemy[i].i - 1;
+					//enemy[i].i = enemy[i].i - 1;
 					map[enemy[i].i][enemy[i].j] = 6;
 				}
 				else if (map[enemy[i].i - 1][enemy[i].j] == 3)
 				{
-					enemy[i].i = enemy[i].i - 1;
+					//enemy[i].i = enemy[i].i - 1;
 					map[enemy[i].i][enemy[i].j] = 7;
 				}
 				else if (enemy[i].i - 1 == player.i && enemy[i].j == player.j)
 				{
 					//라이프 감소
-					map[enemy[i].i][enemy[i].j] = 0;
-					enemy[i].i = enemy[i].i - 1;
+					//map[enemy[i].i][enemy[i].j] = 0;
+					//enemy[i].i = enemy[i].i - 1;
+				}
+				else
+				{
+
 				}
 
 				continue;
 			}
 		}
+
 		if (enemy[i].direction == LEFT)
 		{
 			if (map[enemy[i].i][enemy[i].j - 1] == 1)
@@ -145,8 +153,42 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy)
 				enemy[i].direction = DOWN;
 			}
 			else
+			{
+				if (map[enemy[i].i][enemy[i].j] == 5)
+				{
+					map[enemy[i].i][enemy[i].j] = 0;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 6)
+				{
+					map[enemy[i].i][enemy[i].j] = 2;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 7)
+				{
+					map[enemy[i].i][enemy[i].j] = 3;
+				}
+
+				/**/
+				enemy[i].j = enemy[i].j - 1;
+				if (map[enemy[i].i][enemy[i].j] == 2)
+				{
+					map[enemy[i].i][enemy[i].j] = 6;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 3)
+				{
+					//enemy[i].j = enemy[i].j - 1;
+					map[enemy[i].i][enemy[i].j] = 7;
+				}
+				else if (enemy[i].i == player.i && enemy[i].j == player.j)
+				{
+					//라이프 감소
+					//map[enemy[i].i][enemy[i].j] = 0;
+					//enemy[i].j = enemy[i].j - 1;
+				}
 				continue;
+			}
+
 		}
+
 		if (enemy[i].direction == DOWN)
 		{
 			if (map[enemy[i].i + 1][enemy[i].j] == 1)
@@ -154,12 +196,86 @@ void EnemyMove(int map[][J], Player player, Enemy* enemy)
 				enemy[i].direction = RIGHT;
 			}
 			else
+			{
+				if (map[enemy[i].i][enemy[i].j] == 5)
+				{
+					map[enemy[i].i][enemy[i].j] = 0;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 6)
+				{
+					map[enemy[i].i][enemy[i].j] = 2;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 7)
+				{
+					map[enemy[i].i][enemy[i].j] = 3;
+				}
+
+				/**/
+				enemy[i].i = enemy[i].i + 1;
+				if (map[enemy[i].i][enemy[i].j] == 2)
+				{
+
+					map[enemy[i].i][enemy[i].j] = 6;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 3)
+				{
+					//enemy[i].i = enemy[i].i + 1;
+					map[enemy[i].i][enemy[i].j] = 7;
+				}
+				else if (enemy[i].i == player.i && enemy[i].j == player.j)
+				{
+					//라이프 감소
+					//map[enemy[i].i][enemy[i].j] = 0;
+					//enemy[i].i = enemy[i].i + 1;
+				}
 				continue;
+
+			}
 		}
 
+		if (enemy[i].direction == RIGHT)
+		{
+			if (map[enemy[i].i][enemy[i].j+1] == 1)
+			{
+				enemy[i].direction = UP;
+			}
+			else
+			{
+				if (map[enemy[i].i][enemy[i].j] == 5)
+				{
+					map[enemy[i].i][enemy[i].j] = 0;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 6)
+				{
+					map[enemy[i].i][enemy[i].j] = 2;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 7)
+				{
+					map[enemy[i].i][enemy[i].j] = 3;
+				}
 
+				/**/
+				enemy[i].j = enemy[i].j + 1;
+				if (map[enemy[i].i][enemy[i].j] == 2)
+				{
+
+					map[enemy[i].i][enemy[i].j] = 6;
+				}
+				else if (map[enemy[i].i][enemy[i].j] == 3)
+				{
+					//enemy[i].j = enemy[i].j+1;
+					map[enemy[i].i][enemy[i].j] = 7;
+				}
+				else if (enemy[i].i == player.i && enemy[i].j == player.j)
+				{
+					//라이프 감소
+					//map[enemy[i].i][enemy[i].j] = 0;
+					//enemy[i].j = enemy[i].j+ 1;
+				}
+				continue;
+			}
+		}
 	}
-
 
 }
 
@@ -211,7 +327,7 @@ int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int en
 		for (i = 0; i < enemy_cnt_init; i++)
 		{
 			if (!enemy[i].valid) continue;
-			if ((*player).i == enemy[i].i&&(*player).j == enemy[i].j)break;
+			if ((*player).i == enemy[i].i && (*player).j == enemy[i].j)break;
 		}
 
 		/*normal*/
@@ -278,7 +394,10 @@ int main()
 
 	enemy_cnt = enemy_cnt_init;
 
+	EnemyMove(map, player, enemy, enemy_cnt_init);
 	printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt, life);
+	printf("%d %d %d\n", enemy[0].direction, enemy[1].direction, enemy[2].direction);
+
 
 	while (1)
 	{
@@ -291,13 +410,15 @@ int main()
 		else if (a == 80) { if (MoveCheck(map, player, DOWN))player.i++; }
 		else if (a == 75) { if (MoveCheck(map, player, LEFT))player.j--; }
 		else if (a == 77) { if (MoveCheck(map, player, RIGHT))player.j++; }
-
+		
 		CollisionCheck(map, &player, enemy, &coin_cnt, enemy_cnt_init, &enemy_cnt, &life);
 		if (player.mode) (player.mode)--;
+		EnemyMove(map, player, enemy, enemy_cnt_init);
 
 		system("cls");
 
 		printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt);
+		printf("%d %d %d\n", enemy[0].direction, enemy[1].direction, enemy[2].direction);
 		Sleep(33);
 	}
 
