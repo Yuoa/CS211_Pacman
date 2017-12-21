@@ -12,7 +12,7 @@
 #define LEFT (2)
 #define RIGHT (3)
 #define N (10)
-#define MODE (10)
+#define MODE (100)
 
 /*0: player*/
 /*1: enemy*/
@@ -37,20 +37,24 @@ typedef struct
 /*1: wall*/
 /*2: coin*/
 /*3: fellit*/
+/*4: player*/
+/*5: enemy + blank*/
+/*6: enemy + coin*/
+/*7: enemy + fellit*/
 
-void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt, int coin_cnt)
+void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int enemy_cnt, int coin_cnt)
 {
 	printf("LEFT COIN : %d\n", coin_cnt);
 	printf("LEFT ENEMY : %d\n", enemy_cnt);
 	printf("%d\n", player.mode);
 
 	int i, j, k, IsEnemy;
-	for (int i = 0; i < I; i++)
+	for (i = 0; i < I; i++)
 	{
-		for (int j = 0; j < J; j++)
+		for (j = 0; j < J; j++)
 		{
 			IsEnemy = 0;
-			for (int k = 0; k < enemy_cnt; k++)
+			for (k = 0; k < enemy_cnt_init; k++)
 			{
 				if (!enemy[k].valid) continue;
 
@@ -61,6 +65,7 @@ void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt, int coin
 					break;
 				}
 			}
+
 			if (IsEnemy) continue;
 
 			if (i == player.i&&j == player.j)
@@ -82,6 +87,80 @@ void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt, int coin
 		}
 		printf("\n");
 	}
+}
+
+void EnemyMove(int map[][J], Player player, Enemy* enemy)
+{
+	int i;
+
+	for (i = 0; i < N; i++)
+	{
+		if (enemy[i].direction == UP)
+		{
+			if (map[enemy[i].i - 1][enemy[i].j] == 1)
+			{
+				enemy[i].direction = LEFT;
+			}
+			else
+			{
+				if (map[enemy[i].i][enemy[i].j] == 5)
+				{
+					map[enemy[i].i][enemy[i].j] = 0;
+				}
+				else if (map[enemy[i].i - 1][enemy[i].j] == 6)
+				{
+					map[enemy[i].i][enemy[i].j] = 1;
+				}
+				else if (map[enemy[i].i - 1][enemy[i].j] == 7)
+				{
+					map[enemy[i].i][enemy[i].j] = 2;
+				}
+
+				/**/
+
+				if (map[enemy[i].i - 1][enemy[i].j] == 2)
+				{
+					enemy[i].i = enemy[i].i - 1;
+					map[enemy[i].i][enemy[i].j] = 6;
+				}
+				else if (map[enemy[i].i - 1][enemy[i].j] == 3)
+				{
+					enemy[i].i = enemy[i].i - 1;
+					map[enemy[i].i][enemy[i].j] = 7;
+				}
+				else if (enemy[i].i - 1 == player.i && enemy[i].j == player.j)
+				{
+					//라이프 감소
+					map[enemy[i].i][enemy[i].j] = 0;
+					enemy[i].i = enemy[i].i - 1;
+				}
+
+				continue;
+			}
+		}
+		if (enemy[i].direction == LEFT)
+		{
+			if (map[enemy[i].i][enemy[i].j - 1] == 1)
+			{
+				enemy[i].direction = DOWN;
+			}
+			else
+				continue;
+		}
+		if (enemy[i].direction == DOWN)
+		{
+			if (map[enemy[i].i + 1][enemy[i].j] == 1)
+			{
+				enemy[i].direction = RIGHT;
+			}
+			else
+				continue;
+		}
+
+
+	}
+
+
 }
 
 int MoveCheck(int map[][J], Player player, int direction)
@@ -108,7 +187,7 @@ int MoveCheck(int map[][J], Player player, int direction)
 	}
 }
 
-int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int* enemy_cnt, int *life)
+int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int enemy_cnt_init, int* enemy_cnt, int *life)
 {
 	int i;
 	/*coin*/
@@ -127,9 +206,9 @@ int CollisionCheck(int map[][J], Player* player, Enemy* enemy, int* coin, int* e
 
 		return 0;
 	}
-	else if (map[(*player).i][(*player).j] == 4)
+	else if (map[(*player).i][(*player).j] != 0)
 	{
-		for (i = 0; i < enemy_cnt; i++)
+		for (i = 0; i < enemy_cnt_init; i++)
 		{
 			if (!enemy[i].valid) continue;
 			if ((*player).i == enemy[i].i&&(*player).j == enemy[i].j)break;
@@ -187,8 +266,9 @@ int main()
 				enemy[enemy_cnt_init].i = i;
 				enemy[enemy_cnt_init].j = j;
 				enemy[enemy_cnt_init].valid = 1;
+				enemy[enemy_cnt_init].direction = UP;
 				enemy_cnt_init++;
-				map[i][j] = 0;
+				map[i][j] = 5;
 			}
 		}
 		fscanf(p, "%*c");
@@ -198,7 +278,7 @@ int main()
 
 	enemy_cnt = enemy_cnt_init;
 
-	printmap(map, player, enemy, enemy_cnt, coin_cnt, life);
+	printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt, life);
 
 	while (1)
 	{
@@ -212,11 +292,12 @@ int main()
 		else if (a == 75) { if (MoveCheck(map, player, LEFT))player.j--; }
 		else if (a == 77) { if (MoveCheck(map, player, RIGHT))player.j++; }
 
-		CollisionCheck(map, &player, enemy, &coin_cnt, &enemy_cnt, &life);
+		CollisionCheck(map, &player, enemy, &coin_cnt, enemy_cnt_init, &enemy_cnt, &life);
+		if (player.mode) (player.mode)--;
 
 		system("cls");
 
-		printmap(map, player, enemy, enemy_cnt, coin_cnt);
+		printmap(map, player, enemy, enemy_cnt_init, enemy_cnt, coin_cnt);
 		Sleep(33);
 	}
 
