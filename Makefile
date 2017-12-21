@@ -14,10 +14,11 @@ OBJ=\
 	$(OUTDIR)/s3c_gpio.o \
 	$(OUTDIR)/s3c_uart.o \
 	$(OUTDIR)/support.o\
+	$(OUTDIR)/main.o \
 
 CFLAGS64=-DCONFIG_MANGO_64
 COMPILE64=$(CC) -c -Wall -g -o "$(OUTDIR)/$(*F).o" $(CFG_INC) $(CFLAGS64) $<
-LINK64=$(CC) --specs=nosys.specs -g -o "$(OUTFILE)" $(OBJ) -e main -Ttext=0x50100000
+LINK64=$(CC) -g -o "$(OUTFILE)" --specs=nosys.specs $(OBJ) -e main -Ttext=0x50100000
 COPY64=$(CP) $(OUTFILE) $(OUTDIR_BIN)/
 
 COMPILE=$(COMPILE64)
