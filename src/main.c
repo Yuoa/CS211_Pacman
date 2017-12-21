@@ -1,5 +1,7 @@
 #include "lcd.h"
 #include "s3c_timer.h"
+#include "interrupt.h"
+#include "graphics.h"
 
 #include "pacman.h"
 #include "res-pm.h"
@@ -46,8 +48,22 @@ void die(void) {
   mdelay(100);
 }
 
+void initial_env(void) {
+  disable_interrupts();
+  send_x = 0;
+  send_y = 0;
+  lcd_init();
+  gfx_init();
+  mango_interrupt_init();
+  enable_interrupts();
+}
+
 int main(void){
   initial_env();
   die();
+  while (1) {
+    mdelay(1000);
+    printf("%d, %d\n", send_x, send_y);
+  }
   return 0;
 }

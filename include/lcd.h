@@ -42,7 +42,7 @@
 
 #define FB_ADDR     0x5a000000
 
-void initial_env(void);
+void lcd_init(void);
 void set_wincon0_enable(void);
 void set_vidcon0_enable(void);
 

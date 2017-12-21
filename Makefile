@@ -14,6 +14,9 @@ OBJ=\
 	$(OUTDIR)/s3c_gpio.o \
 	$(OUTDIR)/s3c_uart.o \
 	$(OUTDIR)/support.o\
+	$(OUTDIR)/util.o\
+	$(OUTDIR)/graphics.o\
+	$(OUTDIR)/interrupt.o\
 	$(OUTDIR)/main.o \
 
 CFLAGS64=-DCONFIG_MANGO_64

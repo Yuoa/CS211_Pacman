@@ -111,7 +111,7 @@ void set_lcd_pos(int ltx, int lty, int rbx, int rby){
     S3C_VIDWxxADD2_PAGEWIDTH_F(PAGE_WIDTH);
 }
 
-void initial_env(void) {
+void lcd_init(void) {
   mango_uart_init(1, 115200);
   lcd_bl_on(MAX_BL_LEV-1);
   lcd_pwr_on();
