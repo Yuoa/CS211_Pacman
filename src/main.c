@@ -3,6 +3,15 @@
 #include "interrupt.h"
 #include "graphics.h"
 
+#include "res-gg.h"
+#include "res-item.h"
+#include "res-map.h"
+#include "res-pm.h"
+#include "res-score.h"
+
+#define WIDTH 21
+#define HEIGHT 17
+
 int direction = -1;
 int cnt[4] = {0, 0, 0, 0};
 int old_x, old_y;
@@ -86,8 +95,211 @@ void change_dir(void) {
   }
 }
 
+/*void draw_map(int map[][WIDTH]) {
+  int i, j;
+
+  draw_image(0, 0, 15, 15, map_cd_left_top);
+  draw_image(0, 465, 15, 15, map_cd_left_bottom);
+  draw_image(585, 0, 15, 15, map_cd_right_top);
+  draw_image(585, 465, 15, 15, map_cd_right_bottom);
+
+  for (j = 1; j < HEIGHT-1; j++) {
+    if (map[j][1] != 1) {
+      draw_image(0, 30*j-15, 15, 15, map_rd_left);
+      draw_image(0, 30*j, 15, 15, map_rd_left);
+    }
+    else {
+      draw_image(0, 30*j-15, 15, 15, map_cd_left_lower);
+      draw_image(0, 30*j, 15, 15, map_cd_left_upper);
+    }
+    if (map[j][WIDTH-2] != 1) {
+      draw_image(585, 30*j-15, 15, 15, map_rd_right);
+      draw_image(585, 30*j, 15, 15, map_rd_right);
+    }
+    else {
+      draw_image(585, 30*j-15, 15, 15, map_cd_right_lower);
+      draw_image(585, 30*j, 15, 15, map_cd_right_upper);
+    }
+  }
+
+  for (i = 1; i < WIDTH-1; i++) {
+    if (map[1][i] != 1) {
+      draw_image(30*i-15, 0, 15, 15, map_cd_top);
+      draw_image(30*i, 0, 15, 15, map_cd_top);
+    }
+    else {
+      draw_image(30*i-15, 0, 15, 15, map_cd_upper_right);
+      draw_image(30*i, 0, 15, 15, map_cd_upper_left);
+    }
+    draw_image(30*i-15, 465, 15, 15, map_cd_bottom);
+    draw_image(30*i, 465, 15, 15, map_cd_bottom);
+  }
+
+
+
+  for (j = 1; j < HEIGHT-1; j++) {
+    for (i = 1; i < WIDTH-1; i++) {
+      if (map[j][i] != 1) {
+        draw_image(30*i-15, 30*j-15, 15, 15, map_blank);
+        draw_image(30*i, 30*j-15, 15, 15, map_blank);
+        draw_image(30*i-15, 30*j, 15, 15, map_blank);
+        draw_image(30*i-15, 30*j-15, 15, 15, map_blank);
+      }
+      else if (map[j][i-1] == 1) { // left
+        if (map[j][i+1] == 1) { // right
+          if (map[j-1][i] == 1) { // up
+            if (map[j+1][i] == 1) { // down
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
+              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
+            }
+          }
+          else {
+            if (map[j+1][i] == 1) {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
+              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
+            }
+          }
+        }
+        else {
+          if (map[j-1][i] == 1) {
+            if (map[j+1][i] == 1) {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
+              draw_image(30*i, 30*j, 15, 15, map_c_right);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
+            }
+          }
+          else {
+            if (map[j+1][i] == 1) {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
+              draw_image(30*i, 30*j, 15, 15, map_c_right);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
+            }
+          }
+        }
+      }
+      else {
+        if (map[j][i+1] == 1) {
+          if (map[j-1][i] == 1) {
+            if (map[j+1][i] == 1) {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
+              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
+            }
+          }
+          else {
+            if (map[j+1][i] == 1) {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
+              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
+            }
+          }
+        }
+        else {
+          if (map[j-1][i] == 1) {
+            if (map[j+1][i] == 1) {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
+              draw_image(30*i, 30*j, 15, 15, map_c_right);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
+            }
+          }
+          else {
+            if (map[j+1][i] == 1) {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
+              draw_image(30*i, 30*j, 15, 15, map_c_right);
+            }
+            else {
+              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
+              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
+              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
+              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
+            }
+          }
+        }
+      }
+    }
+  }
+}*/
+
 int main(void){
+
   initial_env();
+
+/*int test_map[17][21] = {
+{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1}, 
+{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1}, 
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1}, 
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1}, 
+{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
+
+draw_map(test_map);*/
+
+
+
   die();
   while (1) {
     old_x = send_x;
