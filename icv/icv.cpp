@@ -48,7 +48,7 @@ int main(int c, char** v) {
 	
 		if(strcmp(v[t], "-v") == 0) {
 		
-			cout << "Version: ICV_REV201712206\n";
+			cout << "Version: ICV_REV201712210\n";
 
 			return gpl();
 		
@@ -267,7 +267,8 @@ int main(int c, char** v) {
 
 			/* Start Conversion */
 
-			out << "unsigned char " << var << "[" << origin->total() * 3 << "]={";
+			out << dec
+				<< "unsigned char " << var << "[" << origin->total() * 3 << "]={";
 
 			for(int e = 0; e < rows; e++)
 				for(int m = 0; m < columns; m++) {
