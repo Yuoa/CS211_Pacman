@@ -48,7 +48,7 @@ int main(int c, char** v) {
 	
 		if(strcmp(v[t], "-v") == 0) {
 		
-			cout << "Version: ICV_REV201712210\n";
+			cout << "Version: ICV_REV201712211\n";
 
 			return gpl();
 		
@@ -267,8 +267,7 @@ int main(int c, char** v) {
 
 			/* Start Conversion */
 
-			out << dec
-				<< "unsigned char " << var << "[" << origin->total() * 3 << "]={";
+			out << "unsigned char " << var << "[" << origin->total() * 3 << "]={";
 
 			for(int e = 0; e < rows; e++)
 				for(int m = 0; m < columns; m++) {
@@ -278,10 +277,12 @@ int main(int c, char** v) {
 				
 					Vec3b px = origin->at<Vec3b>(Point(m, e));
 					
-					out << hex
-						<< "0x" << (int) px[0] //Blue
-						<< ",0x" << (int) px[1] //Green
-						<< ",0x" << (int) px[2]; //Red
+					/* Print as decimal form(len=<3) is always better than hexadecimal form(len=<4) */
+
+					
+					out << (int) px[0] //Blue
+						<< "," << (int) px[1] //Green
+						<< "," << (int) px[2]; //Red
 				
 				}
 
