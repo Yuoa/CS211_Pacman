@@ -29,9 +29,9 @@ unsigned char* dmap[36] = {
   map_rd_left_bottom,//25
   map_rd_right_bottom,//26
   map_rd_top,//27
-  map_rd_left,//28
+  map_rd_right,//28
   map_rd_bottom,//29
-  map_rd_right,//30
+  map_rd_left,//30
   map_rd_door_left,//31
   map_rd_door_right,//32
   map_rd_door,//33
