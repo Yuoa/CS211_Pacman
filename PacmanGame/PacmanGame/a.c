@@ -78,7 +78,7 @@ typedef struct
 
 void EnemyInit(int map[][J], Enemy* enemy)
 {
-
+	                         
 }
 
 void printmap(int map[][J], Player player, Enemy* enemy, int enemy_cnt_init, int enemy_cnt, int coin_cnt, int life, int score)
