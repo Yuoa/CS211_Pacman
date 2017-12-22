@@ -25,7 +25,7 @@ int status_dir;
 #define LEFT (2)
 #define RIGHT (4)
 #define N (4)
-#define MODE (150)
+#define MODE (120)
 #define PLAYER_I (28)
 #define PLAYER_J (21)
 #define GHOST_I (11)
@@ -633,10 +633,10 @@ void draw_image_with_color(int x, int y, int w, int h, unsigned char bg) {
 
 void die(int befx, int befy, int level, int life) {
 
-	drawgg_red(0, 0, 0, 0, -1,0,0, NULL);
-	if( level > 1) drawgg_blue(0, 0, 0, 0, -1,0,0, NULL);
-if( level > 2) drawgg_yellow(0, 0, 0, 0, -1,0,0, NULL);
-if( level > 3) drawgg_pink(0, 0, 0, 0, -1,0,0, NULL);
+	drawgg_red(0, 0, 0, 0, -1, 1);
+	if( level > 1) drawgg_blue(0, 0, 0, 0, -1, 1);
+if( level > 2) drawgg_yellow(0, 0, 0, 0, -1, 1);
+if( level > 3) drawgg_pink(0, 0, 0, 0, -1, 1);
   draw_image(befx, befy, 30, 30, pm_die_0);
   mdelay(100);
   draw_image(befx, befy, 30, 30, pm_die_1);
@@ -665,24 +665,18 @@ if( level > 3) drawgg_pink(0, 0, 0, 0, -1,0,0, NULL);
 
 
 
-void drawgg_red(int pacx, int pacy, int dir, int status, int mode, int i, int j, int map[][J]) {
+void drawgg_red(int pacx, int pacy, int dir, int status, int mode, int opt) {
 
 	static int befx = 0, befy = 0;
-	if(mode==-1){ draw_image_with_color(befx, befy, 30, 30, 0);
-		return;}
-	if (befx) {
-			//printf("pd or pp!\n");
-			draw_image(170 + 15*j, 15 * i, 15, 15, dmap[map[i][j]]);
-			draw_image(170 + 15*(j+1), 15 * i, 15, 15, dmap[map[i][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * i, 15, 15, dmap[map[i][j-1]]);
-			draw_image(170 + 15*j, 15 * (i+1), 15, 15, dmap[map[i+1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i+1), 15, 15, dmap[map[i+1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i+1), 15, 15, dmap[map[i+1][j-1]]);
-			draw_image(170 + 15*j, 15 * (i-1), 15, 15, dmap[map[i-1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i-1), 15, 15, dmap[map[i-1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i-1), 15, 15, dmap[map[i-1][j-1]]);
+	if(befx){
+		if (opt) {
+		draw_image_with_color(befx, befy, 30, 30, 0);
+		return;
+		}
+}
+if(mode == -1)
+	return;
 
-	}
 
 	befx = pacx;
 	befy = pacy;
@@ -722,24 +716,18 @@ void drawgg_red(int pacx, int pacy, int dir, int status, int mode, int i, int j,
 	
 }
 
-void drawgg_pink(int pacx, int pacy, int dir, int status, int mode, int i, int j, int map[][J]) {
+void drawgg_pink(int pacx, int pacy, int dir, int status, int mode, int opt) {
 
 	static int befx = 0, befy = 0;
-	if(mode==-1){ draw_image_with_color(befx, befy, 30, 30, 0);
-		return;}
-	if (befx) {
-			//printf("pd or pp!\n");
-			draw_image(170 + 15*j, 15 * i, 15, 15, dmap[map[i][j]]);
-			draw_image(170 + 15*(j+1), 15 * i, 15, 15, dmap[map[i][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * i, 15, 15, dmap[map[i][j-1]]);
-			draw_image(170 + 15*j, 15 * (i+1), 15, 15, dmap[map[i+1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i+1), 15, 15, dmap[map[i+1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i+1), 15, 15, dmap[map[i+1][j-1]]);
-			draw_image(170 + 15*j, 15 * (i-1), 15, 15, dmap[map[i-1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i-1), 15, 15, dmap[map[i-1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i-1), 15, 15, dmap[map[i-1][j-1]]);
+	if(befx){
+		if (opt) {
+		draw_image_with_color(befx, befy, 30, 30, 0);
+		return;
+		}
+}
+if(mode == -1)
+	return;
 
-	}
 	befx = pacx;
 	befy = pacy;
 	if(mode==0) {
@@ -776,24 +764,18 @@ void drawgg_pink(int pacx, int pacy, int dir, int status, int mode, int i, int j
 }
 
 
-void drawgg_blue(int pacx, int pacy, int dir, int status, int mode, int i, int j, int map[][J]) {
+void drawgg_blue(int pacx, int pacy, int dir, int status, int mode, int opt) {
 
 	static int befx = 0, befy = 0;
-	if(mode==-1){ draw_image_with_color(befx, befy, 30, 30, 0);
-		return;}
-	if (befx) {
-			//printf("pd or pp!\n");
-			draw_image(170 + 15*j, 15 * i, 15, 15, dmap[map[i][j]]);
-			draw_image(170 + 15*(j+1), 15 * i, 15, 15, dmap[map[i][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * i, 15, 15, dmap[map[i][j-1]]);
-			draw_image(170 + 15*j, 15 * (i+1), 15, 15, dmap[map[i+1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i+1), 15, 15, dmap[map[i+1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i+1), 15, 15, dmap[map[i+1][j-1]]);
-			draw_image(170 + 15*j, 15 * (i-1), 15, 15, dmap[map[i-1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i-1), 15, 15, dmap[map[i-1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i-1), 15, 15, dmap[map[i-1][j-1]]);
+	if(befx){
+		if (opt) {
+		draw_image_with_color(befx, befy, 30, 30, 0);
+		return;
+		}
+}
+if(mode == -1)
+	return;
 
-	}
 	befx = pacx;
 	befy = pacy;
 	if(mode==0) {
@@ -829,24 +811,18 @@ void drawgg_blue(int pacx, int pacy, int dir, int status, int mode, int i, int j
 	}
 }
 
-void drawgg_yellow(int pacx, int pacy, int dir, int status, int mode, int i, int j, int map[][J]) {
+void drawgg_yellow(int pacx, int pacy, int dir, int status, int mode, int opt) {
 
 	static int befx = 0, befy = 0;
-	if(mode==-1){ draw_image_with_color(befx, befy, 30, 30, 0);
-		return;}
-	if (befx) {
-			//printf("pd or pp!\n");
-			draw_image(170 + 15*j, 15 * i, 15, 15, dmap[map[i][j]]);
-			draw_image(170 + 15*(j+1), 15 * i, 15, 15, dmap[map[i][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * i, 15, 15, dmap[map[i][j-1]]);
-			draw_image(170 + 15*j, 15 * (i+1), 15, 15, dmap[map[i+1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i+1), 15, 15, dmap[map[i+1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i+1), 15, 15, dmap[map[i+1][j-1]]);
-			draw_image(170 + 15*j, 15 * (i-1), 15, 15, dmap[map[i-1][j]]);
-			draw_image(170 + 15*(j+1), 15 * (i-1), 15, 15, dmap[map[i-1][j+1]]);
-			draw_image(170 + 15*(j-1), 15 * (i-1), 15, 15, dmap[map[i-1][j-1]]);
+	if(befx){
+		if (opt) {
+		draw_image_with_color(befx, befy, 30, 30, 0);
+		return;
+		}
+}
+if(mode == -1)
+	return;
 
-	}
 	befx = pacx;
 	befy = pacy;
 	if(mode==0) {
@@ -1011,11 +987,16 @@ void updatescoredisp(int score) {
 
 void show(int map[][J], Player player, Ghost* ghost, int level, int score, int life)
 {
+    drawgg_red(ghost[0].j*15+163+ghost[0].j_offset*15/ghost[0].speed, ghost[0].i*15-7+ghost[0].i_offset*15/ghost[0].speed, (ghost[0].dir_now)%4, status_dir%4, player.mode,1);
+    if (level >= 2) drawgg_pink(ghost[1].j*15+163+ghost[1].j_offset*15/ghost[1].speed, ghost[1].i*15-7+ghost[1].i_offset*15/ghost[1].speed, (ghost[1].dir_now)%4, status_dir%4, player.mode,1);
+    if (level >= 3) drawgg_blue(ghost[2].j*15+163+ghost[2].j_offset*15/ghost[2].speed, ghost[2].i*15-7+ghost[2].i_offset*15/ghost[2].speed, (ghost[2].dir_now)%4, status_dir%4, player.mode,1);
+    if (level >= 4) drawgg_yellow(ghost[3].j*15+163+ghost[3].j_offset*15/ghost[3].speed, ghost[3].i*15-7+ghost[3].i_offset*15/ghost[3].speed, (ghost[3].dir_now)%4, status_dir%4, player.mode,1);
+
     drawpm(player.j*15+163+player.j_offset*15/player.speed, player.i*15-7+player.i_offset*15/player.speed, (player.dir_now)%4, status_dir%4, life, level);
-    drawgg_red(ghost[0].j*15+163+ghost[0].j_offset*15/ghost[0].speed, ghost[0].i*15-7+ghost[0].i_offset*15/ghost[0].speed, (ghost[0].dir_now)%4, status_dir%4, player.mode, ghost[0].i, ghost[0].j, map);
-    if (level >= 2) drawgg_pink(ghost[1].j*15+163+ghost[1].j_offset*15/ghost[1].speed, ghost[1].i*15-7+ghost[1].i_offset*15/ghost[1].speed, (ghost[1].dir_now)%4, status_dir%4, player.mode, ghost[1].i, ghost[1].j, map);
-    if (level >= 3) drawgg_blue(ghost[2].j*15+163+ghost[2].j_offset*15/ghost[2].speed, ghost[2].i*15-7+ghost[2].i_offset*15/ghost[2].speed, (ghost[2].dir_now)%4, status_dir%4, player.mode, ghost[2].i, ghost[2].j, map);
-    if (level >= 4) drawgg_yellow(ghost[3].j*15+163+ghost[3].j_offset*15/ghost[3].speed, ghost[3].i*15-7+ghost[3].i_offset*15/ghost[3].speed, (ghost[3].dir_now)%4, status_dir%4, player.mode, ghost[3].i, ghost[3].j, map);
+    drawgg_red(ghost[0].j*15+163+ghost[0].j_offset*15/ghost[0].speed, ghost[0].i*15-7+ghost[0].i_offset*15/ghost[0].speed, (ghost[0].dir_now)%4, status_dir%4, player.mode,0);
+    if (level >= 2) drawgg_pink(ghost[1].j*15+163+ghost[1].j_offset*15/ghost[1].speed, ghost[1].i*15-7+ghost[1].i_offset*15/ghost[1].speed, (ghost[1].dir_now)%4, status_dir%4, player.mode,0);
+    if (level >= 3) drawgg_blue(ghost[2].j*15+163+ghost[2].j_offset*15/ghost[2].speed, ghost[2].i*15-7+ghost[2].i_offset*15/ghost[2].speed, (ghost[2].dir_now)%4, status_dir%4, player.mode,0);
+    if (level >= 4) drawgg_yellow(ghost[3].j*15+163+ghost[3].j_offset*15/ghost[3].speed, ghost[3].i*15-7+ghost[3].i_offset*15/ghost[3].speed, (ghost[3].dir_now)%4, status_dir%4, player.mode,0);
     updatescoredisp(score);
 	//printf("pacman!\n");
 }
@@ -1145,7 +1126,7 @@ int main(void)
 					for (xj = 18; xj < 24; xj++) draw_image(170 + 15*xj, 450, 15, 15, dmap[data_map[30][xj]]);
 				}
 			}
-			draw_image_with_otherbg(77, 83, 15, 15, numlist[level], 20);
+			draw_image_with_otherbg(77, 159, 15, 15, numlist[level], 20);
 			//updatescoredisp(dispScore);
 
 		}
