@@ -12,7 +12,7 @@
 #define LEFT (3)
 #define RIGHT (4)
 #define N (4)
-#define MODE (60)
+#define MODE (300000)
 #define PLAYER_I (28)
 #define PLAYER_J (21)
 #define GHOST_I (11)
