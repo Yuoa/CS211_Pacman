@@ -13,9 +13,505 @@
 #define WIDTH 21
 #define HEIGHT 17
 
-int direction = -1;
+int direction;
 int cnt[4] = {0, 0, 0, 0};
 int old_x, old_y;
+int status_dir;
+
+#define I (32)
+#define J (42)
+#define UP (3)
+#define DOWN (1)
+#define LEFT (2)
+#define RIGHT (4)
+#define N (4)
+#define MODE (60)
+#define PLAYER_I (28)
+#define PLAYER_J (21)
+#define GHOST_I (11)
+#define GHOST_J (21)
+
+typedef struct
+{
+	int i, j;
+	int i_offset, j_offset;
+	int dir_now, dir_next;
+	int mode;
+	int speed;
+}Player;
+
+typedef struct
+{
+	int valid;
+	int i, j;
+	int i_offset, j_offset;
+	int i_dest, j_dest;
+	int dir_now, dir_next;
+	int speed;
+}Ghost;
+
+void Init(const int datamap[][J], int map[][J], Player* player, Ghost* ghost, int level, int* coin_cnt_left)
+{
+	int i, j;
+
+	for (i = 0; i < I; i++)
+	{
+		for (j = 0; j < J; j++)
+		{
+			map[i][j] = datamap[i][j];
+
+			if (map[i][j] == 1)(*coin_cnt_left)++;
+		}
+	}
+
+	(*player).i = PLAYER_I; (*player).j = PLAYER_J;
+	(*player).i_offset = 0; (*player).j_offset = 0;
+	(*player).dir_now = 0; (*player).dir_next = 0;
+	(*player).mode = 0; (*player).speed = 4;
+
+	for (i = 0; i < N; i++)
+	{
+		ghost[i].i = GHOST_I; ghost[i].j = GHOST_J;
+		ghost[i].i_offset = 0; ghost[i].j_offset = 0;
+		ghost[i].valid = 0; ghost[i].dir_now = UP; ghost[i].dir_next = UP;
+	}
+
+	if (level == 1)
+	{
+		ghost[0].speed = 10;
+		ghost[0].valid = 1;
+	}
+	else if (level == 2)
+	{
+		ghost[0].speed = 10;
+		ghost[1].speed = 8;
+		ghost[0].valid = 1;
+		ghost[1].valid = 1;
+	}
+	else if (level == 3)
+	{
+		ghost[0].speed = 10;
+		ghost[1].speed = 8;
+		ghost[2].speed = 6;
+		ghost[0].valid = 1;
+		ghost[1].valid = 1;
+		ghost[2].valid = 1;
+	}
+	else if (level == 4)
+	{
+		ghost[0].speed = 10;
+		ghost[1].speed = 8;
+		ghost[2].speed = 6;
+		ghost[3].speed = 4;
+		ghost[0].valid = 1;
+		ghost[1].valid = 1;
+		ghost[2].valid = 1;
+		ghost[3].valid = 1;
+	}
+}
+
+void Input(Player* player)
+{
+	int a;
+
+	a = direction;
+
+	if (a == 3) { if (player->dir_now == 0) { player->dir_now = UP; player->dir_next = UP; } else player->dir_next = UP; }
+	else if (a == 1) { if (player->dir_now == 0) { player->dir_now = DOWN; player->dir_next = DOWN; } else player->dir_next = DOWN; }
+	else if (a == 2) { if (player->dir_now == 0) { player->dir_now = LEFT; player->dir_next = LEFT; } else player->dir_next = LEFT; }
+	else if (a == 0) { if (player->dir_now == 0) { player->dir_now = RIGHT; player->dir_next = RIGHT; } else player->dir_next = RIGHT; }
+}
+
+void offsetupdate(int map[][J], Player* player, Ghost* ghost)
+{
+	int i;
+	/*direction update*/
+	if (player->dir_next != player->dir_now)
+	{
+		if (player->dir_next == UP)
+		{
+			if (player->j_offset == 0 && map[player->i - 1][player->j] < 3)
+			{
+				player->dir_now = UP;
+			}
+		}
+		else if (player->dir_next == DOWN)
+		{
+			if (player->j_offset == 0 && map[player->i + 1][player->j] < 3)
+			{
+				player->dir_now = DOWN;
+			}
+		}
+		else if (player->dir_next == LEFT)
+		{
+			if (player->i_offset == 0 && map[player->i][player->j - 1] < 3)
+			{
+				player->dir_now = LEFT;
+			}
+		}
+		else
+		{
+			if (player->i_offset == 0 && map[player->i][player->j + 1] < 3)
+			{
+				player->dir_now = RIGHT;
+			}
+		}
+	}
+	
+	/*move*/
+	
+	if (player->dir_now == UP|| player->dir_now == DOWN)
+	{
+		if (player->dir_now == UP)
+		{
+			if (map[player->i - 1][player->j] < 3)
+				player->i_offset--;
+		}
+		else
+		{
+			if (map[player->i + 1][player->j] < 3)
+				player->i_offset++;
+		}
+		if (player->i_offset == (-1)*(player->speed) / 2)
+		{
+			player->i--;
+			player->i_offset = 0;
+		}
+		else if (player->i_offset == player->speed / 2 )
+		{
+			player->i++;
+			player->i_offset = 0;
+		}
+	}
+	else
+	{
+		if (player->dir_now == LEFT)
+		{
+			if (map[player->i][player->j] == -10)
+			{
+				player->j = J - 1;
+				player->j_offset = 0;
+			}
+			else if (map[player->i][player->j - 1] < 3)
+				player->j_offset--;
+		}
+		else
+		{
+			if (map[player->i][player->j] == -11)
+			{
+				player->j = 0;
+				player->j_offset = 0;
+			}
+			if (map[player->i][player->j + 1] < 3)
+				player->j_offset++;
+		}
+
+		if (player->j_offset == (-1)*(player->speed) / 2)
+		{
+			player->j--;
+			player->j_offset = 0;
+		}
+		else if (player->j_offset == player->speed / 2 )
+		{
+			player->j++;
+			player->j_offset = 0;
+		}
+	}
+
+	/*ghost*/
+	for (i = 0; i < N; i++)
+	{
+		if (ghost[i].valid == 0) continue;
+
+		ghost[i].i_dest = player->i;
+		ghost[i].j_dest = player->j;
+		
+		if (ghost[i].i_dest < ghost[i].i)
+		{
+			ghost[i].dir_now = UP;
+			if (ghost[i].j_dest < ghost[i].j)
+				ghost[i].dir_next = LEFT;
+			else if (ghost[i].j_dest > ghost[i].j)
+				ghost[i].dir_next = RIGHT;
+		}
+		else if (ghost[i].i_dest > ghost[i].i)
+		{
+			ghost[i].dir_now = DOWN;
+			if (ghost[i].j_dest < ghost[i].j)
+				ghost[i].dir_next = LEFT;
+			else if (ghost[i].j_dest > ghost[i].j)
+				ghost[i].dir_next = RIGHT;
+		}
+		else
+		{
+			if (ghost[i].j_dest < ghost[i].j)
+				ghost[i].dir_now = ghost[i].dir_next = LEFT;
+			else
+				ghost[i].dir_now = ghost[i].dir_next = RIGHT;
+		}
+
+		///////////////////////////////
+
+
+		if (ghost[i].dir_now == UP && ghost[i].dir_next == RIGHT && map[ghost[i].i - 1][ghost[i].j] > 2)
+		{
+			ghost[i].dir_now = ghost[i].dir_next = RIGHT;
+		}
+		else if (ghost[i].dir_now == DOWN && ghost[i].dir_next == RIGHT && map[ghost[i].i + 1][ghost[i].j] > 2)
+		{
+			ghost[i].dir_now = ghost[i].dir_next = RIGHT;
+		}
+		else if (ghost[i].dir_now == DOWN && ghost[i].dir_next == LEFT && map[ghost[i].i + 1][ghost[i].j] > 2)
+		{
+			ghost[i].dir_now = ghost[i].dir_next = LEFT;
+		}
+		else if (ghost[i].dir_now == UP && ghost[i].dir_next == LEFT && map[ghost[i].i - 1][ghost[i].j] > 2)
+		{
+			ghost[i].dir_now = ghost[i].dir_next = LEFT;
+		}
+
+		///////////////////////////
+
+		if (ghost[i].valid == 1)
+		{
+			if (ghost[i].dir_now == UP || ghost[i].dir_now == DOWN)
+			{
+				if (ghost[i].dir_now == UP)
+				{
+					if (map[ghost[i].i - 1][ghost[i].j] < 3)
+						ghost[i].i_offset--;
+				}
+				else
+				{
+					if (map[ghost[i].i + 1][ghost[i].j] < 3)
+						ghost[i].i_offset++;
+				}
+
+				if (ghost[i].i_offset == (-1)*(ghost[i].speed) / 2)
+				{
+					ghost[i].i--;
+					ghost[i].i_offset = 0;
+				}
+				else if (ghost[i].i_offset == ghost[i].speed / 2)
+				{
+					ghost[i].i++;
+					ghost[i].i_offset = 0;
+				}
+			}
+			else
+			{
+				if (ghost[i].dir_now == LEFT)
+				{
+					if (map[ghost[i].i][ghost[i].j - 1] < 3)
+						ghost[i].j_offset--;
+				}
+				else
+				{
+					if (map[ghost[i].i][ghost[i].j + 1] < 3)
+						ghost[i].j_offset++;
+				}
+				if (ghost[i].j_offset == (-1)*(ghost[i].speed) / 2)
+				{
+					ghost[i].j--;
+					ghost[i].j_offset = 0;
+				}
+				else if (ghost[i].j_offset == ghost[i].speed / 2)
+				{
+					ghost[i].j++;
+					ghost[i].j_offset = 0;
+				}
+			}
+		}
+
+	}
+}
+
+void colcheck(int map[][J], Player* player, Ghost* ghost, int*score, int *life, int *coin_cnt_left)
+{
+	int i, IsCol = 0;
+
+	if (map[player->i][player->j] == 1)
+	{
+		map[player->i][player->j] = 0;
+		(*coin_cnt_left)--;
+		(*score) += 10;
+	}
+	else if (map[player->i][player->j] == 2)
+	{
+		player->mode = MODE;
+		map[player->i][player->j] = 0;
+		(*score) += 50;
+	}
+
+	for (i = 0; i < N; i++)
+	{
+		if (!ghost[i].valid) continue;
+		if (ghost[i].valid > 1) 
+		{ printf("%d\n", ghost[i].valid);  ghost[i].valid--; if (ghost[i].valid == 1) { ghost[i].i = GHOST_I; ghost[i].j = GHOST_J; ghost[i].i_offset = ghost[i].j_offset = 0; continue; } }
+		if ((*player).i == ghost[i].i && (*player).j == ghost[i].j)
+		{
+			IsCol = 1;
+			break;
+		}
+	}
+
+	if(IsCol)
+	{
+		/*normal*/
+		if (!(*player).mode)
+		{
+			(*life)--;
+
+			player->i = PLAYER_I;
+			player->j = PLAYER_J;
+
+			player->i_offset = player->j_offset = 0;
+		}
+		/*fellet*/
+		else
+		{
+			ghost[i].valid = 10;
+
+			map[(*player).i][(*player).j] = 0;
+			(*score) += 200;
+		}
+	}
+
+
+
+	if (player->mode)player->mode--;
+}
+
+int gamecheck(int* life, int* coin_cnt_left)
+{
+	if (*life == 0) return 1;
+	if (*coin_cnt_left == 0) return 2;
+	return 0;
+}
+
+int proc(int map[][J], Player* player, Ghost* ghost, int level, int*score, int *life, int *coin_cnt_left)
+{
+	offsetupdate(map, player, ghost);
+	
+	colcheck(map, player,  ghost, score, life, coin_cnt_left);
+
+	return gamecheck(life, coin_cnt_left);
+}
+
+
+
+
+
+unsigned char* dmap[36] = {
+  map_blank,//0
+  map_pacdot,//1
+  map_powerpellet,//2
+  map_cd_left_top,//3
+  map_cd_left_bottom,//4
+  map_cd_right_top,//5
+  map_cd_right_bottom,//6
+  map_cd_top,//7
+  map_rd_right,//8
+  map_cd_bottom,//9
+  map_rd_left,//10
+  map_cd_right_upper,//11
+  map_cd_left_upper,//12
+  map_cd_right_lower,//13
+  map_cd_left_lower,//14
+  map_c_left_top,//15
+  map_c_left_bottom,//16
+  map_c_right_top,//17
+  map_c_right_bottom,//18
+  map_c_top,//19
+  map_c_right,//20
+  map_c_bottom,//21
+  map_c_left,//22
+  map_rd_left_top,//23
+  map_rd_right_top,//24
+  map_rd_left_bottom,//25
+  map_rd_right_bottom,//26
+  map_rd_top,//27
+  map_rd_right,//28
+  map_rd_bottom,//29
+  map_rd_left,//30
+  map_rd_door_left,//31
+  map_rd_door_right,//32
+  map_rd_door,//33
+  map_cd_upper_right,//34
+  map_cd_upper_left//35
+  };
+
+static int unmap[32][42] = {
+  /*00*/{ 3, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,34,35, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5},
+  /*01*/{10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8},
+  /*02*/{10, 0,15,19,19,19,17, 0,15,19,19,19,19,19,17, 0,15,19,17, 0,22,20, 0,15,19,17, 0,15,19,19,19,19,19,17, 0,15,19,19,19,17, 0, 8},
+  /*03*/{10, 0,22, 0, 0, 0,20, 0,22, 0, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,20, 0,22, 0,20, 0,22, 0, 0, 0, 0, 0,20, 0,22, 0, 0, 0,20, 0, 8},
+  /*04*/{10, 0,16,21,21,21,18, 0,16,21,21,21,21,21,18, 0,16,21,18, 0,22,20, 0,16,21,18, 0,16,21,21,21,21,21,18, 0,16,21,21,21,18, 0, 8},
+  /*05*/{10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8},
+  /*06*/{10, 0,15,19,19,19,19,19,19,17, 0,15,17, 0,15,19,19,19,17, 0,22,20, 0,15,19,19,19,17, 0,15,17, 0,15,19,19,19,19,19,19,17, 0, 8},
+  /*07*/{10, 0,16,21,21,21,21,21,21,18, 0,22,20, 0,16,21,21,21,18, 0,16,18, 0,16,21,21,21,18, 0,22,20, 0,16,21,21,21,21,21,21,18, 0, 8},
+  /*08*/{10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8},
+  /*09*/{ 4, 9, 9, 9, 9, 9,17, 0,15,19,19,18,20, 0,15,19,19,19,19,19,19,19,19,19,19,19,19,17, 0,22,16,19,19,17, 0,15, 9, 9, 9, 9, 9, 6},
+  /*10*/{ 0, 0, 0, 0, 0, 0,10, 0,16,21,21,17,20, 0,16,21,21,21,21,21,21,21,21,21,21,21,21,18, 0,22,15,21,21,18, 0, 8, 0, 0, 0, 0, 0, 0},
+  /*11*/{ 0, 0, 0, 0, 0, 0,10, 0, 0, 0, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0},
+  /*12*/{ 0, 0, 0, 0, 0, 0,10, 0,15,17, 0,22,20, 0,15,19,17, 0,23,27,27,31,33,33,32,27,27,24, 0,22,20, 0,15,17, 0, 8, 0, 0, 0, 0, 0, 0},
+  /*13*/{ 7, 7, 7, 7, 7, 7,18, 0,22,20, 0,16,18, 0,22, 0,20, 0,28, 0, 0, 0, 0, 0, 0, 0, 0,30, 0,16,18, 0,22,20, 0,16, 7, 7, 7, 7, 7, 7},
+  /*14*/{ 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0, 0, 0, 0,22, 0,20, 0,28, 0, 0, 0, 0, 0, 0, 0, 0,30, 0, 0, 0, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0},
+  /*15*/{ 9, 9, 9, 9, 9, 9,17, 0,22,16,19,19,17, 0,16,21,18, 0,25,29,29,29,29,29,29,29,29,26, 0,15,19,19,18,20, 0,15, 9, 9, 9, 9, 9, 9},
+  /*16*/{ 0, 0, 0, 0, 0, 0,10, 0,22,15,21,21,18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,16,21,21,17,20, 0, 8, 0, 0, 0, 0, 0, 0},
+  /*17*/{ 0, 0, 0, 0, 0, 0,10, 0,22,20, 0, 0, 0, 0,15,19,17, 0,15,19,19,19,19,17, 0,15,19,17, 0, 0, 0, 0,22,20, 0, 8, 0, 0, 0, 0, 0, 0},
+  /*18*/{ 0, 0, 0, 0, 0, 0,10, 0,22,20, 0,15,17, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,15,17, 0,22,20, 0, 8, 0, 0, 0, 0, 0, 0},
+  /*19*/{ 3, 7, 7, 7, 7, 7,18, 0,16,18, 0,22,20, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,20, 0,16,18, 0,16, 7, 7, 7, 7, 7, 5},
+  /*20*/{10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8},
+  /*21*/{10, 0,15,19,19,19,19,19,17, 0,15,18,20, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,16,17, 0,15,19,19,19,19,19,17, 0, 8},
+  /*22*/{10, 0,16,21,21,21,21,21,18, 0,16,17,20, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,15,18, 0,16,21,21,21,21,21,18, 0, 8},
+  /*23*/{10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22,20, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8},
+  /*24*/{14,19,19,19,19,17, 0,15,19,17, 0,22,20, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,20, 0,15,19,17, 0,15,19,19,19,19,13},
+  /*25*/{12,21,21,21,21,18, 0,22, 0,20, 0,22,20, 0,22, 0,20, 0,22, 0, 0, 0, 0,20, 0,22, 0,20, 0,22,20, 0,22, 0,20, 0,16,21,21,21,21,11},
+  /*26*/{10, 0, 0, 0, 0, 0, 0,22, 0,20, 0,16,18, 0,16,21,18, 0,16,21,21,21,21,18, 0,16,21,18, 0,16,18, 0,22, 0,20, 0, 0, 0, 0, 0, 0, 8},
+  /*27*/{10, 0,15,19,19,17, 0,22, 0,20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,22, 0,20, 0,15,19,19,17, 0, 8},
+  /*28*/{10, 0,22, 0, 0,20, 0,22, 0,20, 0,15,19,19,19,19,19,19,19,19,17, 0,15,19,19,19,19,19,19,19,17, 0,22, 0,20, 0,22, 0, 0,20, 0, 8},
+  /*29*/{10, 0,16,21,21,18, 0,16,21,18, 0,16,21,21,21,21,21,21,21,21,18, 0,16,21,21,21,21,21,21,21,18, 0,16,21,18, 0,16,21,21,18, 0, 8},
+  /*30*/{10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8},
+  /*31*/{ 4, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 6}
+};
+
+void initial_env(void) {
+  disable_interrupts();
+  send_x = 0;
+  send_y = 0;
+  lcd_init();
+  gfx_init();
+  mango_interrupt_init();
+  enable_interrupts();
+}
+
+void change_dir(void) {
+  int sub[4] = {0, 0, 0, 0};
+  int max, index;
+  int i;
+
+  sub[0] = send_x - old_x;
+  sub[1] = send_y - old_y;
+  sub[2] = -sub[0];
+  sub[3] = -sub[1];
+  max = sub[0];
+  index = 0;
+  for (i = 1; i < 4; i++) {
+    if (sub[i] > max) {
+      index = i;
+      max = sub[i];
+    }
+  }
+  if (max < 3) index = -1;
+  for (i = 0; i < 4; i++) {
+    if (index != i) cnt[i] = 0;
+  }
+  if (index != -1) {
+    cnt[index]++;
+    if (cnt[index] >= 3) direction = index;
+  }
+}
 
 void draw_image(int x, int y, int w, int h, unsigned char *data) {
   unsigned char *phy_addr = FB_ADDR;
@@ -27,7 +523,7 @@ void draw_image(int x, int y, int w, int h, unsigned char *data) {
         *(phy_addr+800*4*i+4*j+k) = *(data+index);
         index++;
       }
-      *(phy_addr+800*4*i+4*j+3) = 0x0;
+      //*(phy_addr+800*4*i+4*j+3) = 0x0;
     }
   }
   set_wincon0_enable();
@@ -41,12 +537,13 @@ void draw_image_without_blackbg(int x, int y, int w, int h, unsigned char *data)
   int index = 0;
   for (i = y; i < y+h; i++) {
     for (j = x; j < x+w; j++) {
-      for (k = 0; k < 3; k++) {
-	if(*(data+index) != 0)
-        	*(phy_addr+800*4*i+4*j+k) = *(data+index);
-        index++;
+      if ((*(data+index)) || (*(data+index+1)) || (*(data+index+2))) {
+	for (k = 0; k < 3; k++) {
+	  *(phy_addr+800*4*i+4*j+k) = *(data+index);
+          index++;
+	}
       }
-      *(phy_addr+800*4*i+4*j+3) = 0x0;
+      else index += 3;
     }
   }
   set_wincon0_enable();
@@ -66,7 +563,6 @@ void draw_image_with_otherbg(int x, int y, int w, int h, unsigned char *data, un
 		*(phy_addr+800*4*i+4*j+k) = bg;
         index++;
       }
-      *(phy_addr+800*4*i+4*j+3) = 0x0;
     }
   }
   set_wincon0_enable();
@@ -119,418 +615,156 @@ int befy = pacy * 15 - 7;
   draw_image_with_color(befx, befy, 30, 30, 0);
 }
 
-void initial_env(void) {
-  disable_interrupts();
-  send_x = 0;
-  send_y = 0;
-  lcd_init();
-  gfx_init();
-  mango_interrupt_init();
-  enable_interrupts();
-}
-
-void change_dir(void) {
-  int sub[4] = {0, 0, 0, 0};
-  int max, index;
-  int i;
-
-  sub[0] = send_x - old_x;
-  sub[1] = send_y - old_y;
-  sub[2] = -sub[0];
-  sub[3] = -sub[1];
-  max = sub[0];
-  index = 0;
-  for (i = 1; i < 4; i++) {
-    if (sub[i] > max) {
-      index = i;
-      max = sub[i];
-    }
-  }
-  if (max < 3) index = -1;
-  for (i = 0; i < 4; i++) {
-    if (index != i) cnt[i] = 0;
-  }
-  if (index != -1) {
-    cnt[index]++;
-    if (cnt[index] >= 3) direction = index;
-  }
-}
-
-/*void draw_map(int map[][WIDTH]) {
-  int i, j;
-
-  draw_image(0, 0, 15, 15, map_cd_left_top);
-  draw_image(0, 465, 15, 15, map_cd_left_bottom);
-  draw_image(585, 0, 15, 15, map_cd_right_top);
-  draw_image(585, 465, 15, 15, map_cd_right_bottom);
-
-  for (j = 1; j < HEIGHT-1; j++) {
-    if (map[j][1] != 1) {
-      draw_image(0, 30*j-15, 15, 15, map_rd_left);
-      draw_image(0, 30*j, 15, 15, map_rd_left);
-    }
-    else {
-      draw_image(0, 30*j-15, 15, 15, map_cd_left_lower);
-      draw_image(0, 30*j, 15, 15, map_cd_left_upper);
-    }
-    if (map[j][WIDTH-2] != 1) {
-      draw_image(585, 30*j-15, 15, 15, map_rd_right);
-      draw_image(585, 30*j, 15, 15, map_rd_right);
-    }
-    else {
-      draw_image(585, 30*j-15, 15, 15, map_cd_right_lower);
-      draw_image(585, 30*j, 15, 15, map_cd_right_upper);
-    }
-  }
-
-  for (i = 1; i < WIDTH-1; i++) {
-    if (map[1][i] != 1) {
-      draw_image(30*i-15, 0, 15, 15, map_cd_top);
-      draw_image(30*i, 0, 15, 15, map_cd_top);
-    }
-    else {
-      draw_image(30*i-15, 0, 15, 15, map_cd_upper_right);
-      draw_image(30*i, 0, 15, 15, map_cd_upper_left);
-    }
-    draw_image(30*i-15, 465, 15, 15, map_cd_bottom);
-    draw_image(30*i, 465, 15, 15, map_cd_bottom);
-  }
 
 
-
-  for (j = 1; j < HEIGHT-1; j++) {
-    for (i = 1; i < WIDTH-1; i++) {
-      if (map[j][i] != 1) {
-        draw_image(30*i-15, 30*j-15, 15, 15, map_blank);
-        draw_image(30*i, 30*j-15, 15, 15, map_blank);
-        draw_image(30*i-15, 30*j, 15, 15, map_blank);
-        draw_image(30*i-15, 30*j-15, 15, 15, map_blank);
-      }
-      else if (map[j][i-1] == 1) { // left
-        if (map[j][i+1] == 1) { // right
-          if (map[j-1][i] == 1) { // up
-            if (map[j+1][i] == 1) { // down
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
-              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
-            }
-          }
-          else {
-            if (map[j+1][i] == 1) {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
-              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
-            }
-          }
-        }
-        else {
-          if (map[j-1][i] == 1) {
-            if (map[j+1][i] == 1) {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
-              draw_image(30*i, 30*j, 15, 15, map_c_right);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_right_bottom);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
-            }
-          }
-          else {
-            if (map[j+1][i] == 1) {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_right_top);
-              draw_image(30*i, 30*j, 15, 15, map_c_right);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
-            }
-          }
-        }
-      }
-      else {
-        if (map[j][i+1] == 1) {
-          if (map[j-1][i] == 1) {
-            if (map[j+1][i] == 1) {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
-              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_left_bottom);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
-            }
-          }
-          else {
-            if (map[j+1][i] == 1) {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
-              draw_image(30*i, 30*j, 15, 15, map_c_left_top);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_bottom);
-            }
-          }
-        }
-        else {
-          if (map[j-1][i] == 1) {
-            if (map[j+1][i] == 1) {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
-              draw_image(30*i, 30*j, 15, 15, map_c_right);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
-            }
-          }
-          else {
-            if (map[j+1][i] == 1) {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left);
-              draw_image(30*i, 30*j, 15, 15, map_c_right);
-            }
-            else {
-              draw_image(30*i-15, 30*j-15, 15, 15, map_c_left_top);
-              draw_image(30*i, 30*j-15, 15, 15, map_c_right_top);
-              draw_image(30*i-15, 30*j, 15, 15, map_c_left_bottom);
-              draw_image(30*i, 30*j, 15, 15, map_c_right_bottom);
-            }
-          }
-        }
-      }
-    }
-  }
-}*/
-
-void movegg_red(int pacx, int pacy, int dir) {
+void drawgg_red(int pacx, int pacy, int dir, int status) {
 
 	static int befx = 0, befy = 0;
-	befx = 163 + 15*pacx;
-	befy = pacy * 15 - 7;
+	if (befx) draw_image_with_color(befx, befy, 30, 30, 0);
+
+	befx = pacx;
+	befy = pacy;
 
 	switch(dir) {
 
 	case 0: //right
-		draw_image(befx, befy, 30, 30, gg_blinky_right_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_blinky_right_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_right_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_right_1);
 		break;
 	case 1: //down
-		draw_image(befx, befy, 30, 30, gg_blinky_down_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_blinky_down_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_down_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_down_1);
 		break;
 	case 2: //left
-		draw_image(befx, befy, 30, 30, gg_blinky_left_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_blinky_left_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_left_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_left_1);
 		break;
 	case 3: //up
-		draw_image(befx, befy, 30, 30, gg_blinky_up_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_blinky_up_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_up_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_blinky_up_1);
 		break;
-
 	}	
-	
-
 }
 
-void movegg_pink(int pacx, int pacy, int dir) {
+void drawgg_pink(int pacx, int pacy, int dir, int status) {
 
 	static int befx = 0, befy = 0;
-	befx = 163 + 15*pacx;
-	befy = pacy * 15 - 7;
+        if (befx) draw_image_with_color(befx, befy, 30, 30, 0);
+
+	befx = pacx;
+	befy = pacy;
 
 	switch(dir) {
 
 	case 0: //right
-		draw_image(befx, befy, 30, 30, gg_pinky_right_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_pinky_right_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_right_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_right_1);
 		break;
 	case 1: //down
-		draw_image(befx, befy, 30, 30, gg_pinky_down_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_pinky_down_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_down_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_down_1);
 		break;
 	case 2: //left
-		draw_image(befx, befy, 30, 30, gg_pinky_left_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_pinky_left_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_left_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_left_1);
 		break;
 	case 3: //up
-		draw_image(befx, befy, 30, 30, gg_pinky_up_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_pinky_up_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_up_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_pinky_up_1);
 		break;
-
 	}	
-	
-
 }
 
 
-void movegg_blue(int pacx, int pacy, int dir) {
+void drawgg_blue(int pacx, int pacy, int dir, int status) {
 
 	static int befx = 0, befy = 0;
-	befx = 163 + 15*pacx;
-	befy = pacy * 15 - 7;
+	if (befx) draw_image_with_color(befx, befy, 30, 30, 0);
+
+	befx = pacx;
+	befy = pacy;
 
 	switch(dir) {
 
 	case 0: //right
-		draw_image(befx, befy, 30, 30, gg_inky_right_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_inky_right_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_right_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_right_1);
 		break;
 	case 1: //down
-		draw_image(befx, befy, 30, 30, gg_inky_down_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_inky_down_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_down_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_down_1);
 		break;
 	case 2: //left
-		draw_image(befx, befy, 30, 30, gg_inky_left_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_inky_left_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_left_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_left_1);
 		break;
 	case 3: //up
-		draw_image(befx, befy, 30, 30, gg_inky_up_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_inky_up_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_up_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_inky_up_1);
 		break;
-
 	}	
-	
-
 }
 
-void movegg_yellow(int pacx, int pacy, int dir) {
+void drawgg_yellow(int pacx, int pacy, int dir, int status) {
 
 	static int befx = 0, befy = 0;
-	befx = 163 + 15*pacx;
-	befy = pacy * 15 - 7;
+	if (befx) draw_image_with_color(befx, befy, 30, 30, 0);
+
+	befx = pacx;
+	befy = pacy;
 
 	switch(dir) {
 
 	case 0: //right
-		draw_image(befx, befy, 30, 30, gg_clyde_right_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_clyde_right_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_right_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_right_1);
 		break;
 	case 1: //down
-		draw_image(befx, befy, 30, 30, gg_clyde_down_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_clyde_down_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_down_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_down_1);
 		break;
 	case 2: //left
-		draw_image(befx, befy, 30, 30, gg_clyde_left_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_clyde_left_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_left_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_left_1);
 		break;
 	case 3: //up
-		draw_image(befx, befy, 30, 30, gg_clyde_up_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, gg_clyde_up_1);
-		mdelay(50);
+		if (status % 2 == 0) draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_up_0);
+		else draw_image_without_blackbg(befx, befy, 30, 30, gg_clyde_up_1);
 		break;
-
 	}	
-	
-
 }
 
-void moveprint_pacman(int pacx, int pacy, int dir) {
+void drawpm(int pacx, int pacy, int dir, int status) {
 
 	static int befx = 0, befy = 0;
-	befx = 163 + 15*pacx;
-	befy = pacy * 15 - 7;
+	if (befx) draw_image_with_color(befx, befy, 30, 30, 0);
+
+	befx = pacx;
+	befy = pacy;
 
 	switch(dir) {
 
 	case 0: //right
-		draw_image(befx, befy, 30, 30, pm_right_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_right_1);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_right_2);
-		mdelay(50);
+		if (status % 4 == 0) draw_image_without_blackbg(befx, befy, 30, 30, pm_right_0);
+		else if (status % 4 == 1 || status % 4 == 3) draw_image_without_blackbg(befx, befy, 30, 30, pm_right_1);
+		else draw_image_without_blackbg(befx, befy, 30, 30, pm_right_2);
 		break;
 	case 1: //down
-		draw_image(befx, befy, 30, 30, pm_down_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_down_1);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_down_2);
-		mdelay(50);
+		if (status % 4 == 0) draw_image_without_blackbg(befx, befy, 30, 30, pm_down_0);
+		else if (status % 4 == 1 || status % 4 == 3) draw_image_without_blackbg(befx, befy, 30, 30, pm_down_1);
+		else draw_image_without_blackbg(befx, befy, 30, 30, pm_down_2);
 		break;
 	case 2: //left
-		draw_image(befx, befy, 30, 30, pm_left_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_left_1);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_left_2);
-		mdelay(50);
+		if (status % 4 == 0) draw_image_without_blackbg(befx, befy, 30, 30, pm_left_0);
+		else if (status % 4 == 1 || status % 4 == 3) draw_image_without_blackbg(befx, befy, 30, 30, pm_left_1);
+		else draw_image_without_blackbg(befx, befy, 30, 30, pm_left_2);
 		break;
 	case 3: //up
-		draw_image(befx, befy, 30, 30, pm_up_0);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_up_1);
-		mdelay(50);
-		draw_image(befx, befy, 30, 30, pm_up_2);
-		mdelay(50);
+		if (status % 4 == 0) draw_image_without_blackbg(befx, befy, 30, 30, pm_up_0);
+		else if (status % 4 == 1 || status % 4 == 3) draw_image_without_blackbg(befx, befy, 30, 30, pm_up_1);
+		else draw_image_without_blackbg(befx, befy, 30, 30, pm_up_2);
 		break;
-
 	}	
-	
-
 }
 
 void updatescoredisp(int score) {
@@ -618,160 +852,123 @@ void updatescoredisp(int score) {
 
 }
 
-int main(void){
+void show(int map[][J], Player player, Ghost* ghost, int level, int score, int life)
+{
+    drawpm(player.j*15+163+player.j_offset*15/player.speed, player.i*15-7+player.i_offset*15/player.speed, (player.dir_now)%4, status_dir%4);
+    drawgg_red(ghost[0].j*15+163+ghost[0].j_offset*15/ghost[0].speed, ghost[0].i*15-7+ghost[0].i_offset*15/ghost[0].speed, (ghost[0].dir_now)%4, status_dir%4);
+    if (level >= 2) drawgg_pink(ghost[1].j*15+163+ghost[1].j_offset*15/ghost[1].speed, ghost[1].i*15-7+ghost[1].i_offset*15/ghost[1].speed, (ghost[1].dir_now)%4, status_dir%4);
+    if (level >= 3) drawgg_blue(ghost[2].j*15+163+ghost[2].j_offset*15/ghost[2].speed, ghost[2].i*15-7+ghost[2].i_offset*15/ghost[2].speed, (ghost[2].dir_now)%4, status_dir%4);
+    if (level >= 4) drawgg_yellow(ghost[3].j*15+163+ghost[3].j_offset*15/ghost[3].speed, ghost[3].i*15-7+ghost[3].i_offset*15/ghost[3].speed, (ghost[3].dir_now)%4, status_dir%4);
+}
 
-  initial_env();
+int main(void)
+{
+	initial_env();
 
-/*int test_map[17][21] = {
-{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1}, 
-{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1}, 
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1}, 
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1}, 
-{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
+	int xi, xj;
+	int dispScore = 0;
 
-draw_map(test_map);*/
+	const int data_map[I][J] = {
+		{ 3,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,34,35,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5 },
+		{ 10,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,22,20,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,8 },
+		{ 10,0,15,19,19,19,17,0,15,19,19,19,19,19,17,0,15,19,17,0,22,20,0,15,19,17,0,15,19,19,19,19,19,17,0,15,19,19,19,17,0,8 },
+		{ 10,0,22,0,0,0,20,0,22,0,0,0,0,0,20,0,22,0,20,0,22,20,0,22,0,20,0,22,0,0,0,0,0,20,0,22,0,0,0,20,0,8 },
+		{ 10,0,16,21,21,21,18,0,16,21,21,21,21,21,18,0,16,21,18,0,22,20,0,16,21,18,0,16,21,21,21,21,21,18,0,16,21,21,21,18,0,8 },
+		{ 10,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,22,20,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,8 },
+		{ 10,0,15,19,19,19,19,19,19,17,0,15,17,0,15,19,19,19,17,0,22,20,0,15,19,19,19,17,0,15,17,0,15,19,19,19,19,19,19,17,0,8 },
+		{ 10,0,16,21,21,21,21,21,21,18,0,22,20,0,16,21,21,21,18,0,16,18,0,16,21,21,21,18,0,22,20,0,16,21,21,21,21,21,21,18,0,8 },
+		{ 10,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,8 },
+		{ 4,9,9,9,9,9,17,0,15,19,19,18,20,0,15,19,19,19,19,19,19,19,19,19,19,19,19,17,0,22,16,19,19,17,0,15,9,9,9,9,9,6 },
+		{ 0,0,0,0,0,0,10,0,16,21,21,17,20,0,16,21,21,21,21,21,21,21,21,21,21,21,21,18,0,22,15,21,21,18,0,8,0,0,0,0,0,0 },
+		{ 0,0,0,0,0,0,10,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,8,0,0,0,0,0,0 },
+		{ 0,0,0,0,0,0,10,0,15,17,0,22,20,0,15,19,17,0,23,27,27,31,33,33,32,27,27,24,0,22,20,0,15,17,0,8,0,0,0,0,0,0 },
+		{ 7,7,7,7,7,7,18,0,22,20,0,16,18,0,22,0,20,0,28,0,0,0,0,0,0,0,0,30,0,16,18,0,22,20,0,16,7,7,7,7,7,7 },
+		{ -10,0,0,0,0,0,0,0,22,20,0,0,0,0,22,0,20,0,28,0,0,0,0,0,0,0,0,30,0,0,0,0,22,20,0,0,0,0,0,0,0,-11 },
+		{ 9,9,9,9,9,9,17,0,22,16,19,19,17,0,16,21,18,0,25,29,29,29,29,29,29,29,29,26,0,15,19,19,18,20,0,15,9,9,9,9,9,9 },
+		{ 0,0,0,0,0,0,10,0,22,15,21,21,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,21,21,17,20,0,8,0,0,0,0,0,0 },
+		{ 0,0,0,0,0,0,10,0,22,20,0,0,0,0,15,19,17,0,15,19,19,19,19,17,0,15,19,17,0,0,0,0,22,20,0,8,0,0,0,0,0,0 },
+		{ 0,0,0,0,0,0,10,0,22,20,0,15,17,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,15,17,0,22,20,0,8,0,0,0,0,0,0 },
+		{ 3,7,7,7,7,7,18,0,16,18,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,16,18,0,16,7,7,7,7,7,5 },
+		{ 10,0,0,0,0,0,0,0,0,0,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,0,0,0,0,0,0,0,0,0,8 },
+		{ 10,0,15,19,19,19,19,19,17,0,15,18,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,16,17,0,15,19,19,19,19,19,17,0,8 },
+		{ 10,0,16,21,21,21,21,21,18,0,16,17,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,15,18,0,16,21,21,21,21,21,18,0,8 },
+		{ 10,0,0,0,0,0,0,0,0,0,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,0,0,0,0,0,0,0,0,0,8 },
+		{ 14,19,19,19,19,17,0,15,19,17,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,15,19,17,0,15,19,19,19,19,13 },
+		{ 12,21,21,21,21,18,0,22,0,20,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,22,0,20,0,16,21,21,21,21,11 },
+		{ 10,0,0,0,0,0,0,22,0,20,0,16,18,0,16,21,18,0,16,21,21,21,21,18,0,16,21,18,0,16,18,0,22,0,20,0,0,0,0,0,0,8 },
+		{ 10,0,15,19,19,17,0,22,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,0,20,0,15,19,19,17,0,8 },
+		{ 10,0,22,0,0,20,0,22,0,20,0,15,19,19,19,19,19,19,19,19,17,0,15,19,19,19,19,19,19,19,17,0,22,0,20,0,22,0,0,20,0,8 },
+		{ 10,0,16,21,21,18,0,16,21,18,0,16,21,21,21,21,21,21,21,21,18,0,16,21,21,21,21,21,21,21,18,0,16,21,18,0,16,21,21,18,0,8 },
+		{ 10,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,8 },
+		{ 4,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,6 }
+	};
 
-unsigned char* dmap[36] = {
 
-  map_blank,//0
-  map_pacdot,//1
-  map_powerpellet,//2
-  map_cd_left_top,//3
-  map_cd_left_bottom,//4
-  map_cd_right_top,//5
-  map_cd_right_bottom,//6
-  map_cd_top,//7
-  map_rd_right,//8
-  map_cd_bottom,//9
-  map_rd_left,//10
-  map_cd_right_upper,//11
-  map_cd_left_upper,//12
-  map_cd_right_lower,//13
-  map_cd_left_lower,//14
-  map_c_left_top,//15
-  map_c_left_bottom,//16
-  map_c_right_top,//17
-  map_c_right_bottom,//18
-  map_c_top,//19
-  map_c_right,//20
-  map_c_bottom,//21
-  map_c_left,//22
-  map_rd_left_top,//23
-  map_rd_right_top,//24
-  map_rd_left_bottom,//25
-  map_rd_right_bottom,//26
-  map_rd_top,//27
-  map_rd_right,//28
-  map_rd_bottom,//29
-  map_rd_left,//30
-  map_rd_door_left,//31
-  map_rd_door_right,//32
-  map_rd_door,//33
-  map_cd_upper_right,//34
-  map_cd_upper_left//35
+	draw_image_with_color(0,0,170,480,20);
+	draw_image_without_blackbg(47,27,15,15,board_S);
+	draw_image_without_blackbg(62,27,15,15,board_C);
+	draw_image_without_blackbg(77,27,15,15,board_O);
+	draw_image_without_blackbg(92,27,15,15,board_R);
+	draw_image_without_blackbg(107,27,15,15,board_E);
 
-};
+	Player player;
+	Ghost ghost[4];
+	int map[I][J];
+	int score = 0, life=3;
+	int level = 1, coin_cnt_left = 0;
+	int _check;
+	status_dir = 0;
+	int sub_status_dir = 0;
+        int tempdir;
+	int ii;
 
-static int unmap[32][42] = {
-  /*00*/{3,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,34,35,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5},
-  /*01*/{10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8},
-  /*02*/{10,0,15,19,19,19,17,0,15,19,19,19,19,19,17,0,15,19,17,0,22,20,0,15,19,17,0,15,19,19,19,19,19,17,0,15,19,19,19,17,0,8},
-  /*03*/{10,0,22,0,0,0,20,0,22,0,0,0,0,0,20,0,22,0,20,0,22,20,0,22,0,20,0,22,0,0,0,0,0,20,0,22,0,0,0,20,0,8},
-  /*04*/{10,0,16,21,21,21,18,0,16,21,21,21,21,21,18,0,16,21,18,0,22,20,0,16,21,18,0,16,21,21,21,21,21,18,0,16,21,21,21,18,0,8},
-  /*05*/{10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8},
-  /*06*/{10,0,15,19,19,19,19,19,19,17,0,15,17,0,15,19,19,19,17,0,22,20,0,15,19,19,19,17,0,15,17,0,15,19,19,19,19,19,19,17,0,8},
-  /*07*/{10,0,16,21,21,21,21,21,21,18,0,22,20,0,16,21,21,21,18,0,16,18,0,16,21,21,21,18,0,22,20,0,16,21,21,21,21,21,21,18,0,8},
-  /*08*/{10,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,8},
-  /*09*/{4,9,9,9,9,9,17,0,15,19,19,18,20,0,15,19,19,19,19,19,19,19,19,19,19,19,19,17,0,22,16,19,19,17,0,15,9,9,9,9,9,6},
-  /*10*/{0,0,0,0,0,0,10,0,16,21,21,17,20,0,16,21,21,21,21,21,21,21,21,21,21,21,21,18,0,22,15,21,21,18,0,8,0,0,0,0,0,0},
-  /*11*/{0,0,0,0,0,0,10,0,0,0,0,22,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,20,0,0,0,0,8,0,0,0,0,0,0},
-  /*12*/{0,0,0,0,0,0,10,0,15,17,0,22,20,0,15,19,17,0,23,27,27,31,33,33,32,27,27,24,0,22,20,0,15,17,0,8,0,0,0,0,0,0},
-  /*13*/{7,7,7,7,7,7,18,0,22,20,0,16,18,0,22,0,20,0,28,0,0,0,0,0,0,0,0,30,0,16,18,0,22,20,0,16,7,7,7,7,7,7},
-  /*14*/{0,0,0,0,0,0,0,0,22,20,0,0,0,0,22,0,20,0,28,0,0,0,0,0,0,0,0,30,0,0,0,0,22,20,0,0,0,0,0,0,0,0},
-  /*15*/{9,9,9,9,9,9,17,0,22,16,19,19,17,0,16,21,18,0,25,29,29,29,29,29,29,29,29,26,0,15,19,19,18,20,0,15,9,9,9,9,9,9},
-  /*16*/{0,0,0,0,0,0,10,0,22,15,21,21,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,21,21,17,20,0,8,0,0,0,0,0,0},
-  /*17*/{0,0,0,0,0,0,10,0,22,20,0,0,0,0,15,19,17,0,15,19,19,19,19,17,0,15,19,17,0,0,0,0,22,20,0,8,0,0,0,0,0,0},
-  /*18*/{0,0,0,0,0,0,10,0,22,20,0,15,17,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,15,17,0,22,20,0,8,0,0,0,0,0,0},
-  /*19*/{3,7,7,7,7,7,18,0,16,18,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,16,18,0,16,7,7,7,7,7,5},
-  /*20*/{10,0,0,0,0,0,0,0,0,0,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,0,0,0,0,0,0,0,0,0,8},
-  /*21*/{10,0,15,19,19,19,19,19,17,0,15,18,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,16,17,0,15,19,19,19,19,19,17,0,8},
-  /*22*/{10,0,16,21,21,21,21,21,18,0,16,17,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,15,18,0,16,21,21,21,21,21,18,0,8},
-  /*23*/{10,0,0,0,0,0,0,0,0,0,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,0,0,0,0,0,0,0,0,0,8},
-  /*24*/{14,19,19,19,19,17,0,15,19,17,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,15,19,17,0,15,19,19,19,19,13},
-  /*25*/{12,21,21,21,21,18,0,22,0,20,0,22,20,0,22,0,20,0,22,0,0,0,0,20,0,22,0,20,0,22,20,0,22,0,20,0,16,21,21,21,21,11},
-  /*26*/{10,0,0,0,0,0,0,22,0,20,0,16,18,0,16,21,18,0,16,21,21,21,21,18,0,16,21,18,0,16,18,0,22,0,20,0,0,0,0,0,0,8},
-  /*27*/{10,0,15,19,19,17,0,22,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,0,20,0,15,19,19,17,0,8},
-  /*28*/{10,0,22,0,0,20,0,22,0,20,0,15,19,19,19,19,19,19,19,19,17,0,15,19,19,19,19,19,19,19,17,0,22,0,20,0,22,0,0,20,0,8},
-  /*29*/{10,0,16,21,21,18,0,16,21,18,0,16,21,21,21,21,21,21,21,21,18,0,16,21,21,21,21,21,21,21,18,0,16,21,18,0,16,21,21,18,0,8},
-  /*30*/{10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8},
-  /*31*/{4,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,6}
-};
+	while(1)
+	{
+		tempdir = -1;
+		direction = -1;
+		Init(data_map, map, &player, ghost, level, &coin_cnt_left);
+		for(xi = 0;xi < 32; xi++)
+		    for(xj = 0;xj < 42; xj++)
+		      draw_image(170 + 15*xj, 15 * xi, 15, 15, dmap[data_map[xi][xj]]);
 
-int xi, xj;
+		draw_image_without_blackbg(440,450,15,15,board_yR);
+		draw_image_without_blackbg(455,450,15,15,board_yE);
+		draw_image_without_blackbg(470,450,15,15,board_yA);
+		draw_image_without_blackbg(485,450,15,15,board_yD);
+		draw_image_without_blackbg(500,450,15,15,board_yY);
+		draw_image_without_blackbg(515,450,15,15,board_yimp);
 
-draw_image_with_color(0,0,170,480,20);
-draw_image_without_blackbg(47,27,15,15,board_S);
-draw_image_without_blackbg(62,27,15,15,board_C);
-draw_image_without_blackbg(77,27,15,15,board_O);
-draw_image_without_blackbg(92,27,15,15,board_R);
-draw_image_without_blackbg(107,27,15,15,board_E);
 
-int dispScore = 0;
+		while (1)
+		{
+			sub_status_dir++;
+			if (sub_status_dir % 2 == 0) status_dir++;
+			
+			
+			Input(&player);
 
-for(xi = 0;xi < 32; xi++)
-  for(xj = 0;xj < 42; xj++)
-    draw_image(170 + 15*xj, 15 * xi, 15, 15, dmap[map[xi][xj]]);
+			_check = proc(map, &player, ghost, level, &score, &life, &coin_cnt_left);
 
-draw_image_without_blackbg(440,450,15,15,board_yR);
-draw_image_without_blackbg(455,450,15,15,board_yE);
-draw_image_without_blackbg(470,450,15,15,board_yA);
-draw_image_without_blackbg(485,450,15,15,board_yD);
-draw_image_without_blackbg(500,450,15,15,board_yY);
-draw_image_without_blackbg(515,450,15,15,board_yimp);
+			if (_check == 1) { printf("GAMEOVER\n"); mdelay(500); life = 3; level = 1; score = 0; break; }
+			else if (_check == 2) { level++; break; }
 
-int tempdir = -1;
+			show(map, player, ghost, level, score, life);
 
-int pacx = 21, pacy = 28;
+			for (ii = 0; ii < 5; ii++) {
+				old_x = send_x;
+				old_y = send_y;
+				mdelay(10);
+				tempdir = direction;
+				change_dir();
+				if(tempdir == -1 && direction != tempdir) {
+					draw_image_with_color(440,450,90,15,0);
+					for (xj = 18; xj < 24; xj++) draw_image(170 + 15*xj, 450, 15, 15, dmap[data_map[30][xj]]);
+				}
+			}
+			updatescoredisp(dispScore);
 
-  //die();
-  unsigned long cnt = 0;
-  while (1) {
-    old_x = send_x;
-    old_y = send_y;
-    mdelay(10);
-    tempdir = direction;
-    change_dir();
-    if(tempdir == -1 && direction != tempdir)
-      draw_image_with_color(440,450,90,15,0);
+		}
 
-dispScore+=1;
-
-    if(cnt++ % 10 == 0) {
-
-	updatescoredisp(dispScore);
-
-	moveprint_pacman(pacx, pacy, direction);
-	//movegg_red(
-
-    }
-
-    if(dispScore > 5000) {
-	die(pacx, pacy);
-	break;
-    }
-
-  }
-  return 0;
+		if (level == 5) { printf("GAMECLEAR\n"); return 0; }
+	}
 }
