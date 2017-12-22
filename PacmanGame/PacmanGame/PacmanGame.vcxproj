@@ -143,6 +143,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="a.c" />
+    <ClCompile Include="source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="1.txt" />
