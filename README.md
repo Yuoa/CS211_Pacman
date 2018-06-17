@@ -1,6 +1,6 @@
 # Pacman on Mangoboard
 
-This is final project repository for POSTECH CSED211 on 2017 fall Semester.
+This is final project repository for POSTECH CSED211 on 2017 fall semester.
 
 ## Branch description
 
